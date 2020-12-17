@@ -13,7 +13,7 @@ COMRED is a receptor distribution measurement tool, that uses center of mass cal
 * progressbar2
 
 ### Procedure
-Install using `git clone https://github.com/hendrikboog/comred` or download and unpack this project.
+Install using `git clone https://github.com/hendrikboog/comred.git` or download and unpack this project.
 
 ## Usage
 You need two different files for your positions for any comparisons - for every cell you need a file for the receptor position and a file for your nucleus position. If you have several types of receptors you need to provide them in a new file each.
