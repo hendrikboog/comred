@@ -203,7 +203,7 @@ def invisplot():
 # -----------------------------------------------------------------------------
 
 def make_comparison_boxplots():
-    description = ("ComRed 0.1.1 - Last update: 2020-12-15 - Script for "
+    description = ("ComRed 0.2 - Last update: 2021-02-03 - Script for "
                    "comparing two sets of receptor datasets and produce "
                    "boxplot figures")
     parser = argparse.ArgumentParser(description=description)
