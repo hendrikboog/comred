@@ -23,7 +23,7 @@ Get help on the parser: `python parser_for_comred.py -h`
 ```
 usage: parser_for_comred.py [-h] [-d Input directory] [-f Input file] [-t filetype] -x X Column -y Y Column -z Z Column -s Volume column -m Mean intensity Column -o Output folder [-c] [-v]
 
-ComRed 0.1.1 - Parser for tsv or csv files
+ComRed 0.2 - Parser for tsv or csv files
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -53,7 +53,7 @@ After you've parsed you should get two folders with .comred files, one for the r
 ```
 usage: dist_calc.py [-h] -o Output directory [-f Output filename] -r Receptor directory -n Nucleus/Reference directory -x X-resolution -y Y-resolution -z Z-resolution [-c Plot color] [-v]
 
-ComRed 0.1.1 - Script for calculating the Center of Mass distances between COM of the receptors and a reference, as well as the mean distance of receptors to their Center of Mass
+ComRed 0.2 - Script for calculating the Center of Mass distances between COM of the receptors and a reference, as well as the mean distance of receptors to their Center of Mass
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -82,7 +82,7 @@ You will get an output file for the receptor distribution. If you want to compar
 usage: two_comp.py [-h] -o Output directory [-f Output filename] -i Input file 1 Input file 2
                  [-c Left boxplot caption Right boxplot caption]
 
-ComRed 0.1.1 - Script for comparing two sets of receptor datasets and produce boxplot figures
+ComRed 0.2 - Script for comparing two sets of receptor datasets and produce boxplot figures
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -97,14 +97,14 @@ optional arguments:
             Sets the boxplot captions under the single boxplots, first for the left, then for the right
             boxplot, divide the captions with a space, if you want to incorporate spaces put the captions
             in '', if left out file 1 and file 2 will be chosen as captions
- ```
+```
 
 Another way to get a plot is to use the bigcomp.py - it uses pair comparisons to generate a lot of plots. However, you will not get the additional information you would get from the two_compy.py. The program is set to generate n subplots with m pairs in it. Usually one subplot would compare two conditions with each other, for example two distributions of receptors in the same cell type would be one pair - but you add another pair for the same comparison in another cell type. Then in the next subplot you would compare the two cell types, but only the distribution of one type of receptor per pair (see test plots in this folder for a quick overview).
 
 ```
 usage: bigcomp.py [-h] -o Output directory -f Output filename -i Input filepath [Input filepath ...] -s Number of subplots -p Number of pairs -t Figure title -c Subplot caption [Subplot caption ...] -a Subtitle [Subtitle ...] -l Condition1 Condition2
 
-ComRed 0.1.1 - Script for comparing n pairs of receptor distributions. The plot can be divided into subplots (for example for comparing different distributions) with n pairs that are compared.
+ComRed 0.2 - Script for comparing n pairs of receptor distributions. The plot can be divided into subplots (for example for comparing different distributions) with n pairs that are compared.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -129,4 +129,30 @@ optional arguments:
             Legends for comparison pairs for every subplot, e.g. BMPRIb BMPRII. Number of legends needs to
             be equal to twice the number of subplots. For every subplot you need to add more legends by
             invoking a new -l with two conditions
- ```
+```
+
+If you want to generate your own simulated data, which will generate shifted or spread experimental data like distributions you can use the data_simulation.py script.
+
+```
+usage: data_simulation.py [-h] -o Output directory -f Output pdf filename -i Input directory -t Title -n List of n-values [List of n-values ...] [-w] [-a Filehandle for writing files]
+
+ComRed 0.2 - ComReds Data simulation script - The script uses original data to generate
+simulated distributions via inverse transform sampling.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o Output directory, --output Output directory
+                        Set the output directory, where results will be saved, required parameter
+  -f Output pdf filename, --filename Output pdf filename
+                        Set an output filename for the checkup plots pdf
+  -i Input directory, --input Input directory
+                        Add the input filepath for every input file. Divide different files with a space. Put a a file
+                        in '' to allow spaces in the path.
+  -t Title, --title Title
+                        Title of the overview plot. Wrap the title in '' to allow spaces in the title.
+  -n List of n-values [List of n-values ...], --n_list List of n-values [List of n-values ...]
+                        List of n-values for doing simulations.
+  -w, --write           Toggles writing files to single folder before when using data simulation plots.
+  -a Filehandle for writing files, --filehandle Filehandle for writing files
+                        Toggles writing files to single folder before when using data simulation plots.
+```

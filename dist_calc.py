@@ -407,7 +407,7 @@ class dist_calc:
 # -----------------------------------------------------------------------------
 
     def generate_COM_data_from_directories():
-        description = ("ComRed 0.1.1 - Last update: 2020-12-15 - Script for "
+        description = ("ComRed 0.2 - Last update: 2021-02-03 - Script for "
                        "calculating the Center of Mass distances between COM "
                        "of the receptors and a reference, as well as the "
                        "mean distance of receptors to their Center of Mass")

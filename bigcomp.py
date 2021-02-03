@@ -189,7 +189,7 @@ def create_big_plot_bw(output_filename, output_directory, filelist, rows, cols,
 # -----------------------------------------------------------------------------
 
 def make_big_comparison_plot():
-    description = ("ComRed 0.1.1 - Last update: 2020-12-15 - Script for "
+    description = ("ComRed 0.2 - Last update: 2021-02-03 - Script for "
                    "comparing n pairs of receptor distributions. The plot "
                    "can be divided into subplots (for example for comparing "
                    "different distributions) with n pairs that are compared.")
@@ -236,7 +236,6 @@ def make_big_comparison_plot():
     args = parser.parse_args()
     filelist = []
     # sorts the arguments to be usable by create_big_plot_bw
-    # breakpoint()
     legends = [*args.legends]
     for subplot in range(args.subplots):
         for pair in range(0, args.pairs*2, 2):
