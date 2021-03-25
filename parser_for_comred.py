@@ -11,7 +11,7 @@ import progressbar
 
 class parser_sv:
 
-    """ComRed 0.01 - Parser - csv
+    """ComRed 0.3 - Parser - csv
 
 Usage:
 
@@ -154,7 +154,7 @@ Should be able to read csv and tsv files, although tsv is untested yet"""
 
 # Main module - takes in sys arguments and starts up the other functions
 def main():
-    description = ("ComRed 0.2 - Last update: 2021-03-24 - "
+    description = ("ComRed 0.3 - Last update: 2021-03-25 - "
                    "Parser for tsv or csv files")
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-d", "--directory", metavar="Input directory",

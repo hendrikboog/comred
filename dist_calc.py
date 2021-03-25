@@ -13,7 +13,7 @@ import progressbar
 
 class dist_calc:
 
-    """COMRed Version 0.1.1 - Dist_Calc"""
+    """COMRed Version 0.3 - Dist_Calc"""
 
     def __init__(self):
         '''Constructor'''
@@ -407,7 +407,7 @@ class dist_calc:
 # -----------------------------------------------------------------------------
 
     def generate_COM_data_from_directories():
-        description = ("ComRed 0.2 - Last update: 2021-03-24 - Script for "
+        description = ("ComRed 0.3 - Last update: 2021-03-25 - Script for "
                        "calculating the Center of Mass distances between COM "
                        "of the receptors and a reference, as well as the "
                        "mean distance of receptors to their Center of Mass")

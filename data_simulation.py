@@ -542,7 +542,7 @@ def write_files(output_directory, input_directory, reference_directory,
 # ----------------------------------------------------------------------------
 
 def data_simulation():
-    description = ("ComRed 0.2 - Last update: 2021-03-24 - ComReds Data"
+    description = ("ComRed 0.3 - Last update: 2021-03-25 - ComReds Data"
                    " simulation script - The script uses original data to "
                    "generate simulated distributions via inverse transform"
                    " sampling.")

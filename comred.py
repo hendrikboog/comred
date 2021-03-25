@@ -19,7 +19,7 @@ import sys
 
 
 def comred_args():
-    description = ("ComRed 0.2 - Last update: 2021-03-24\n\n"
+    description = ("ComRed 0.3 - Last update: 2021-03-25\n\n"
                    "Welcome to ComRed - a script to analyze receptor "
                    "distributions using center of mass (COM) calculations\n"
                    "Written by: Hendrik Boog\n\n"

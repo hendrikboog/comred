@@ -24,7 +24,7 @@ For example: `python comred.py parse -h`
 ```
 usage: comred.py parse [-h] [-d Input directory] [-f Input file] [-t filetype] -x X Column -y Y Column -z Z Column -s Volume column -m Mean intensity Column -o Output folder [-c] [-v]
 
-ComRed 0.2 - Parser for tsv or csv files
+ComRed 0.3 - Parser for tsv or csv files
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -55,7 +55,7 @@ After you've parsed you should get two folders with .comred files, one for the r
 usage: comred.py calc [-h] -o Output directory [-f Output filename] -r Receptor directory -n Nucleus/Reference directory -x X-resolution -y Y-resolution -z Z-resolution
                       [-c Plot color] [-v]
 
-ComRed 0.2 - Script for calculating the Center of Mass distances between COM of the receptors and a reference, as well as the mean distance of
+ComRed 0.3 - Script for calculating the Center of Mass distances between COM of the receptors and a reference, as well as the mean distance of
 receptors to their Center of Mass
 
 optional arguments:
@@ -86,7 +86,7 @@ You will get an output file for the receptor distributions. If you want to compa
 ```
 usage: comred.py comp [-h] -o Output directory [-f Output filename] -i Input file 1 Input file 2 [-c Left boxplot caption Right boxplot caption]
 
-ComRed 0.2 - Script for comparing two sets of receptor datasets and produce boxplot figures
+ComRed 0.3 - Script for comparing two sets of receptor datasets and produce boxplot figures
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -107,7 +107,7 @@ Another way to get a plot is to use the plot command - it uses pair comparisons 
 ```
 usage: comred.py plot [-h] -o Output directory -f Output filename -i Input filepath [Input filepath ...] -s Number of subplots -p Number of pairs -t Figure title -c Subplot caption [Subplot caption ...] -a Subtitle [Subtitle ...] -l Condition1 Condition2
 
-ComRed 0.2 - Script for comparing n pairs of receptor distributions. The plot can be divided into subplots (for example for comparing different
+ComRed 0.3 - Script for comparing n pairs of receptor distributions. The plot can be divided into subplots (for example for comparing different
 distributions) with n pairs that are compared.
 
 optional arguments:
@@ -139,7 +139,7 @@ If you want to generate your own simulated data, which will generate shifted or 
 usage: comred.py sim [-h] -o Output directory -f Output pdf filename -i Input directory -t Title -n List of n-values [List of n-values ...] [-w]
                      [-a Filehandle for writing files] -r Reference directory [-c]
 
-ComRed 0.2 - ComReds Data simulation script - The script uses original data to generate simulated distributions via inverse transform sampling.
+ComRed 0.3 - ComReds Data simulation script - The script uses original data to generate simulated distributions via inverse transform sampling.
 
 optional arguments:
   -h, --help            show this help message and exit
