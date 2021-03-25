@@ -189,7 +189,7 @@ def create_big_plot_bw(output_filename, output_directory, filelist, rows, cols,
 # -----------------------------------------------------------------------------
 
 def make_big_comparison_plot():
-    description = ("ComRed 0.2 - Last update: 2021-02-03 - Script for "
+    description = ("ComRed 0.2 - Last update: 2021-03-24 - Script for "
                    "comparing n pairs of receptor distributions. The plot "
                    "can be divided into subplots (for example for comparing "
                    "different distributions) with n pairs that are compared.")

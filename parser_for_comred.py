@@ -154,7 +154,7 @@ Should be able to read csv and tsv files, although tsv is untested yet"""
 
 # Main module - takes in sys arguments and starts up the other functions
 def main():
-    description = ("ComRed 0.2 - Last update: 2021-02-03 - "
+    description = ("ComRed 0.2 - Last update: 2021-03-24 - "
                    "Parser for tsv or csv files")
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-d", "--directory", metavar="Input directory",

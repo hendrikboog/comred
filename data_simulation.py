@@ -63,19 +63,22 @@ def make_histogram_o(data_list, xlabel, title, color, bins, linestyle, label):
 
 # ----------------------------------------------------------------------------
 
-# Reads a given .csv file. Check the file colums before using
-# You get only right values, when the right columns are read
-# Here is: 6 = Pixel size, 18 = Mean Intensity, 10 to 12 = COM of one object in
-# x, y or z respectively
-def read_csv(filename):
-    with open(filename, "r") as csv_file:
+def read_comred(filename):
+    # reads a comred file and transfers the data into a list
+    with open(filename, "r") as comred_file:
         comvals = []
-        iter_csv_file = iter(csv_file)
-        next(iter_csv_file)
-        for line in iter_csv_file:
-            line = line.split(",")
-            values = [line[0], float(line[6]), float(line[10]),
-                      float(line[11]), float(line[12]), float(line[18])]
+        iter_comred_file = iter(comred_file)
+        next(iter_comred_file)
+        for line in iter_comred_file:
+            line = line.strip("\n")
+            line = line.split("\t")
+            virtualmass = float(line[4]) * float(line[5])
+            masspos_x = float(line[1]) * virtualmass
+            masspos_y = float(line[2]) * virtualmass
+            masspos_z = float(line[3]) * virtualmass
+            values = [line[0], virtualmass, masspos_x, masspos_y,
+                      masspos_z, line[1], line[2], line[3], line[4],
+                      line[5]]
             comvals.append(values)
         return comvals
 
@@ -95,11 +98,11 @@ def COM_read_directory_files(directory_name, ending):
 # ---------------------------------------------------------------------------
 
 def create_data(directory_name):
-    filelist = COM_read_directory_files(directory_name, ".csv")
+    filelist = COM_read_directory_files(directory_name, ".comred")
     dataallfiles = []
     datapoint_stat = []
     for element in filelist:
-        data_in_file = read_csv(element)
+        data_in_file = read_comred(element)
         datapoint_stat.append(len(data_in_file))
         dataallfiles.append(data_in_file)
     x = []
@@ -111,17 +114,18 @@ def create_data(directory_name):
     std_datpoint = np.std(datapoint_stat)
     for element in dataallfiles:
         for lement in element:
-            x.append(lement[2])
-            y.append(lement[3])
-            z.append(lement[4])
-            vol.append(lement[1])
-            meanint.append(lement[5])
+            x.append(float(lement[5]))
+            y.append(float(lement[6]))
+            z.append(float(lement[7]))
+            vol.append(float(lement[8]))
+            meanint.append(float(lement[9]))
     return x, y, z, vol, meanint, mean_datpoint, std_datpoint
 
 
 # ----------------------------------------------------------------------------
 
 def hyperparam_search(data):
+    # searches for hyperparameters for available data
     val = {}
     for element in range(1, 10000, 1):
         model = model_real(data, element, len(data))
@@ -203,25 +207,78 @@ def double_hist(f1, f2, xmin, xmax):
     # ybound = 1.1*max(n) - 0.05*1.1*max(n)
     plt.text(0.98, 0.98, textges, size=15, transform=axes.transAxes,
              ha="right", va="top", bbox=dict(boxstyle="round", ec="black",
-                                             facecolor="white"))
+                                             facecolor="white", alpha=0.5))
 
 
 # ----------------------------------------------------------------------------
 
-def compare_histograms(data, output_filepath, title):
+def compare_histograms(x, y, z, vol, meanint, output_filepath, title,
+                       n, change="shift", num_bins=1000):
+    if change == "shift":
+        xchanged = change_data_shift(x, n)
+        xchanged = model_real(xchanged, num_bins, len(xchanged))
+        ychanged = change_data_shift(y, n)
+        ychanged = model_real(ychanged, num_bins, len(ychanged))
+        zchanged = change_data_shift(z, n)
+        zchanged = model_real(zchanged, num_bins, len(zchanged))
+        volchanged = change_data_shift(vol, n)
+        volchanged = model_real(volchanged, num_bins, len(volchanged))
+        meanintchanged = change_data_shift(meanint, n)
+        meanintchanged = model_real(meanintchanged, num_bins,
+                                    len(meanintchanged))
+    elif change == "spread":
+        xchanged = change_data_spread(x, n)
+        xchanged = model_real(xchanged, num_bins, len(xchanged))
+        ychanged = change_data_spread(y, n)
+        ychanged = model_real(ychanged, num_bins, len(ychanged))
+        zchanged = change_data_spread(z, n)
+        zchanged = model_real(zchanged, num_bins, len(zchanged))
+        volchanged = change_data_spread(vol, n)
+        volchanged = model_real(volchanged, num_bins, len(volchanged))
+        meanintchanged = change_data_spread(meanint, n)
+        meanintchanged = model_real(meanintchanged, num_bins,
+                                    len(meanintchanged))
+    else:
+        raise Exception("Type '{}' not recognized.".format(change),
+                        " Use 'shift' or 'spread'")
+    xmin = min(min(xchanged), min(x))
+    xmax = max(max(xchanged), max(x))
+    ymin = min(min(ychanged), min(y))
+    ymax = max(max(ychanged), max(y))
+    zmin = min(min(zchanged), min(z))
+    zmax = max(max(zchanged), max(z))
+    volmin = min(min(volchanged), min(vol))
+    volmax = max(max(volchanged), max(vol))
+    meanmin = min(min(meanintchanged), min(meanint))
+    meanmax = max(max(meanintchanged), max(meanint))
     with PdfPages(output_filepath) as pdf:
         fig = plt.figure(figsize=(10, 40))
-        plt.suptitle(title)
-        plt.subplot(5, 1, 1)
-        double_hist(data[0][0], data[0][1])
-        plt.subplot(5, 1, 2)
-        double_hist(data[1][0], data[1][1])
-        plt.subplot(5, 1, 3)
-        double_hist(data[2][0], data[2][1])
-        plt.subplot(5, 1, 4)
-        double_hist(data[3][0], data[3][1])
-        plt.subplot(5, 1, 5)
-        double_hist(data[4][0], data[4][1])
+        plt.suptitle(title, fontsize=25, wrap=True)
+        ax = plt.subplot(5, 1, 1)
+        plt.text(0.5, 1.05, "X-Coordinate", fontsize=20,
+                 horizontalalignment="center", verticalalignment="center",
+                 transform=ax.transAxes)
+        double_hist(x, xchanged, xmin, xmax)
+        ax2 = plt.subplot(5, 1, 2)
+        plt.text(0.5, 1.05, "Y-Coordinate", fontsize=20,
+                 horizontalalignment="center", verticalalignment="center",
+                 transform=ax2.transAxes)
+        double_hist(y, ychanged, ymin, ymax)
+        ax3 = plt.subplot(5, 1, 3)
+        plt.text(0.5, 1.05, "Z-Coordinate", fontsize=20,
+                 horizontalalignment="center", verticalalignment="center",
+                 transform=ax3.transAxes)
+        double_hist(z, zchanged, zmin, zmax)
+        ax4 = plt.subplot(5, 1, 4)
+        plt.text(0.5, 1.05, "Volume", fontsize=20,
+                 horizontalalignment="center", verticalalignment="center",
+                 transform=ax4.transAxes)
+        double_hist(vol, volchanged, volmin, volmax)
+        ax5 = plt.subplot(5, 1, 5)
+        plt.text(0.5, 1.05, "Mean Intensity", fontsize=20,
+                 horizontalalignment="center", verticalalignment="center",
+                 transform=ax5.transAxes)
+        double_hist(meanint, meanintchanged, meanmin, meanmax)
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         pdf.savefig()
         plt.close(fig)
@@ -231,7 +288,7 @@ def compare_histograms(data, output_filepath, title):
 
 def write_files_receptor(input_filepath, output_filepath, output_filename,
                          num_bins=1000, n=0, change_type="shift", n2=0):
-    filelist = COM_read_directory_files(input_filepath, ".csv")
+    filelist = COM_read_directory_files(input_filepath, ".comred")
     x, y, z, vol, meanint, mean_datpoint, std_datpoint = create_data(
         input_filepath)
     if change_type == "shift":
@@ -251,9 +308,9 @@ def write_files_receptor(input_filepath, output_filepath, output_filename,
     with progressbar.ProgressBar(max_value=len(filelist)) as bar:
         for element in range(1, len(filelist)+1, 1):
             fullpath = (output_filepath + "\\" + output_filename +
-                        str(element) + ".csv")
+                        str(element) + ".comred")
             with open(fullpath, "w") as file:
-                file.write("Nr,X,Y,Z,Volumn,Meanint\n")
+                file.write("#Count\tX\tY\tZ\tVolume\tMean Intensity\n")
                 number_data_per_file = int(np.random.normal(mean_datpoint,
                                                             std_datpoint))
                 modelx = model_real(nx, num_bins, number_data_per_file)
@@ -262,9 +319,9 @@ def write_files_receptor(input_filepath, output_filepath, output_filename,
                 modelvol = model_real(nvol, num_bins, number_data_per_file)
                 modelmeanint = model_real(nmi, num_bins, number_data_per_file)
                 for el in range(0, number_data_per_file, 1):
-                    file.write(str(el) + "," + str(modelx[el]) + "," +
-                               str(modely[el]) + "," + str(modelz[el]) +
-                               "," + str(modelvol[el]) + "," +
+                    file.write(str(el) + "\t" + str(modelx[el]) + "\t" +
+                               str(modely[el]) + "\t" + str(modelz[el]) +
+                               "\t" + str(modelvol[el]) + "\t" +
                                str(modelmeanint[el]) + "\n")
             bar.update(element)
     print("Done")
@@ -274,7 +331,7 @@ def write_files_receptor(input_filepath, output_filepath, output_filename,
 
 def write_files_nucleus(input_filepath, output_filepath, output_filename,
                         num_bins=1000, n=0):
-    filelist = COM_read_directory_files(input_filepath, ".csv")
+    filelist = COM_read_directory_files(input_filepath, ".comred")
     x, y, z, vol, meanint, mean_datpoint, std_datpoint = create_data(
         input_filepath)
     nx = change_data_shift(x, n)
@@ -288,18 +345,18 @@ def write_files_nucleus(input_filepath, output_filepath, output_filename,
     with progressbar.ProgressBar(max_value=len(filelist)) as bar:
         for element in range(1, len(filelist)+1, 1):
             fullpath = (output_filepath + "\\" + output_filename +
-                        str(element) + ".csv")
+                        str(element) + ".comred")
             with open(fullpath, "w") as file:
-                file.write("Nr,X,Y,Z,Volumn,Meanint\n")
+                file.write("#Count\tX\tY\tZ\tVolume\tMean Intensity\n")
                 modelx = model_real(nx, num_bins, number_data_per_file)
                 modely = model_real(ny, num_bins, number_data_per_file)
                 modelz = model_real(nz, num_bins, number_data_per_file)
                 modelvol = model_real(nvol, num_bins, number_data_per_file)
                 modelmeanint = model_real(nmi, num_bins, number_data_per_file)
                 for el in range(0, number_data_per_file, 1):
-                    file.write(str(el) + "," + str(modelx[el]) + "," +
-                               str(modely[el]) + "," + str(modelz[el]) +
-                               "," + str(modelvol[el]) + "," +
+                    file.write(str(el) + "\t" + str(modelx[el]) + "\t" +
+                               str(modely[el]) + "\t" + str(modelz[el]) +
+                               "\t" + str(modelvol[el]) + "\t" +
                                str(modelmeanint[el]) + "\n")
             bar.update(element)
     print("Done")
@@ -366,7 +423,7 @@ def change_data_spread(data, n):
 # ----------------------------------------------------------------------------
 
 def receptor_dist_mod_big_plot(input_directory, output_filepath, title,
-                               n_list):
+                               n_list, check=0):
     print("Beginning task...\nReading in data...")
     x, y, z, vol, meanint, mean_datpoint, std_datpoint = create_data(
         input_directory)
@@ -388,7 +445,8 @@ def receptor_dist_mod_big_plot(input_directory, output_filepath, title,
                    horizontalalignment="center", verticalalignment="center")
         form1.axis("off")
         form2 = plt.subplot(gs[2])
-        form2txt = r"$ x_{new} = x_{real} + \frac{n \cdot \overline{x} \cdot (x_{rnd} - \overline{x})}{b} $"
+        form2txt = (r"$ x_{new} = x_{real} + $"
+        r"$\frac{n \cdot \overline{x} \cdot (x_{rnd} - \overline{x})}{b} $")
         form2.text(0.5, 0.5, form2txt, fontsize=30,
                    horizontalalignment="center", verticalalignment="center")
         form2.axis("off")
@@ -405,8 +463,35 @@ def receptor_dist_mod_big_plot(input_directory, output_filepath, title,
             nm2 = model_real(nc2, num_bins, len(nc2))
             models_shift.append(nm1)
             models_spread.append(nm2)
-            maxs.append(max(max(nm1), max(nm2)))
-            mins.append(min(min(nm1), min(nm2)))
+            if len(nm1) and len(nm2):
+                maxs.append(max(max(nm1), max(nm2)))
+                mins.append(min(min(nm1), min(nm2)))
+            else:
+                raise Exception("Data simulation contains an empty list."
+                                " Please check the input folders - "
+                                "Do they contain .comred files?")
+            if check:
+                parent_path = os.path.dirname(output_filepath)
+                check_filename_spread = "check_n={}_spread.pdf".format(element)
+                check_filename_shift = "check_n={}_shift.pdf".format(element)
+                check_output_shift = os.path.join(parent_path,
+                                                  check_filename_shift)
+                check_output_spread = os.path.join(parent_path,
+                                                   check_filename_spread)
+                title_spreadlist = [title, "Inverse Transform Sampling check",
+                                    "spread n={}".format(element)]
+                title_shiftlist = [title, "Inverse Transform Sampling check",
+                                   "spread n={}".format(element)]
+                title_check_spread = " ".join(title_spreadlist)
+                title_check_shift = " ".join(title_shiftlist)
+                compare_histograms(x, y, z, vol, meanint,
+                                   output_filepath=check_output_shift,
+                                   title=title_check_shift, n=element,
+                                   change="shift")
+                compare_histograms(x, y, z, vol, meanint,
+                                   output_filepath=check_output_spread,
+                                   title=title_check_spread, n=element,
+                                   change="spread")
         xmax = max(maxs)
         xmin = min(mins)
         for shift, spread, element in zip(models_shift, models_spread, n_list):
@@ -432,7 +517,8 @@ def receptor_dist_mod_big_plot(input_directory, output_filepath, title,
 
 # ----------------------------------------------------------------------------
 
-def write_files(output_directory, input_directory, filehandle, n_list):
+def write_files(output_directory, input_directory, reference_directory,
+                filehandle, n_list):
     print("Initializing writing of data...\nCreating output folders...")
     mainoutdir = create_output_folders(output_directory, n_list)
     for n in n_list:
@@ -450,13 +536,13 @@ def write_files(output_directory, input_directory, filehandle, n_list):
                              change_type="spread")
         referencedir = os.path.join(mainoutdir, dirname, "reference")
         print("Calculating reference points...")
-        write_files_nucleus(input_directory, referencedir, filehandle, n=0)
+        write_files_nucleus(reference_directory, referencedir, filehandle, n=0)
 
 
 # ----------------------------------------------------------------------------
 
 def data_simulation():
-    description = ("ComRed 0.2 - Last update: 2021-02-03 - ComReds Data"
+    description = ("ComRed 0.2 - Last update: 2021-03-24 - ComReds Data"
                    " simulation script - The script uses original data to "
                    "generate simulated distributions via inverse transform"
                    " sampling.")
@@ -470,9 +556,8 @@ def data_simulation():
                               "plots pdf"),
                         required=True)
     parser.add_argument('-i', "--input", metavar="Input directory",
-                        help=("Add the input filepath for every input file."
-                              " Divide different files with a space. Put a"
-                              " a file in '' to allow spaces in the path."),
+                        help=("Input directory filepath. All .comred files"
+                              " in the input directory will be read."),
                         required=True,  type=str)
     parser.add_argument('-t', "--title", metavar="Title",
                         help=("Title of the overview plot. Wrap the title "
@@ -487,15 +572,29 @@ def data_simulation():
     parser.add_argument("-a", "--filehandle", metavar=("Filehandle for"
                                                        " writing files"),
                         help=("Toggles writing files to single folder before"
-                              " when using data simulation plots."), type=str)
+                              " when using data simulation plots. Only"
+                              " required, when using -w to write files."),
+                        type=str)
+    parser.add_argument('-r', "--reference", metavar="Reference directory",
+                        help=("Directory filepath for your reference files."
+                              " All .comred files in the input directory will"
+                              " be read. Only required with -w to write"
+                              " files"),
+                        required=True,  type=str)
+    parser.add_argument("-c", "--control", action="store_true",
+                        help=("Toggles writing a control plot to check "
+                              "the accuracy of the inverse transform "
+                              "sampling."))
     args = parser.parse_args()
     pdf_handle = args.filename + ".pdf"
     pdf_filepath = os.path.join(args.output, pdf_handle)
     receptor_dist_mod_big_plot(input_directory=args.input,
                                output_filepath=pdf_filepath,
-                               title=args.title, n_list=args.n_list)
+                               title=args.title, n_list=args.n_list,
+                               check=args.control)
     if args.write:
         write_files(output_directory=args.output, input_directory=args.input,
+                    reference_directory=args.reference,
                     filehandle=args.filehandle, n_list=args.n_list)
 
 
