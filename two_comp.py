@@ -120,7 +120,7 @@ def create_comparison_COM_plot(output_filename, output_directory,
             textplot2.text(0, -0.1, figtxt, fontsize=7)
             textplot2.axis("off")
             plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-            pdf.savefig(aspect="auto")
+            pdf.savefig()
             plt.close(fig)
             # -----------
             distance_cell_values = [
@@ -148,7 +148,7 @@ def create_comparison_COM_plot(output_filename, output_directory,
             textplot2.text(0.1, -0.1, figtxt, fontsize=7)
             textplot2.axis("off")
             plt.tight_layout(rect=[0, 0.03, 1, 0.88])
-            pdf.savefig(aspect="auto")
+            pdf.savefig()
             plt.close(fig)
     print("Done")
 
@@ -203,7 +203,7 @@ def invisplot():
 # -----------------------------------------------------------------------------
 
 def make_comparison_boxplots():
-    description = ("ComRed 0.2 - Last update: 2021-02-03 - Script for "
+    description = ("ComRed 0.3 - Last update: 2021-03-25 - Script for "
                    "comparing two sets of receptor datasets and produce "
                    "boxplot figures")
     parser = argparse.ArgumentParser(description=description)
