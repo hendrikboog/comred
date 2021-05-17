@@ -5,7 +5,7 @@ Created on Wed Mar 24 10:29:15 2021
 @author: hboog
 """
 
-from dist_calc import dist_calc as dc
+import dist_calc as dc
 import parser_for_comred as par
 import bigcomp as bc
 import data_simulation as ds
@@ -14,12 +14,13 @@ import argparse
 from argparse import RawTextHelpFormatter
 import os
 import sys
+import visualize as vis
 
 # -----------------------------------------------------------------------------
 
 
 def comred_args():
-    description = ("ComRed 0.3 - Last update: 2021-03-25\n\n"
+    description = ("ComRed 0.3 - Last update: 2021-05-14\n\n"
                    "Welcome to ComRed - a script to analyze receptor "
                    "distributions using center of mass (COM) calculations\n"
                    "Written by: Hendrik Boog\n\n"
@@ -41,30 +42,40 @@ def comred_args():
                                      formatter_class=RawTextHelpFormatter)
     subparsers = parser.add_subparsers(help=("ComRed script type - options "
                                              "are parse, calc, comp, plot, "
-                                             "and sim."),
+                                             "sim, and visualize."),
                                        dest="script")
-    pardes = ("ComRed 0.2 - Last update: 2021-03-24 - Parser for tsv "
+    pardes = ("ComRed 0.3 - Last update: 2021-05-14 - Parser for tsv "
               "or csv files")
     parseparse = subparsers.add_parser("parse", description=pardes)
-    calcdes = ("ComRed 0.2 - Last update: 2021-03-24 - Script for "
+    calcdes = ("ComRed 0.3 - Last update: 2021-05-14 - Script for "
                "calculating the Center of Mass distances between COM "
                "of the receptors and a reference, as well as the "
                "mean distance of receptors to their Center of Mass")
     calcparse = subparsers.add_parser("calc", description=calcdes)
-    compdes = ("ComRed 0.2 - Last update: 2021-03-24 - Script for "
+    compdes = ("ComRed 0.3 - Last update: 2021-05-14 - Script for "
                "comparing two sets of receptor datasets and produce "
                "boxplot figures")
     compparse = subparsers.add_parser("comp", description=compdes)
-    plotdes = ("ComRed 0.2 - Last update: 2021-03-24 - Script for "
+    plotdes = ("ComRed 0.3 - Last update: 2021-05-14 - Script for "
                "comparing n pairs of receptor distributions. The plot "
                "can be divided into subplots (for example for comparing "
                "different distributions) with n pairs that are compared.")
     plotparse = subparsers.add_parser("plot", description=plotdes)
-    simdes = ("ComRed 0.2 - Last update: 2021-03-24 - ComReds Data"
+    simdes = ("ComRed 0.3 - Last update: 2021-05-14 - ComReds Data"
               " simulation script - The script uses original data to "
               "generate simulated distributions via inverse transform"
               " sampling.")
     simparse = subparsers.add_parser("sim", description=simdes)
+    visdes = ("ComRed 0.3 - Last update: 2021-05-14 - Script for "
+              "visualizing comreds calculations. Plots 3 plots per "
+              "analyzed cell in x-y, x-z, and y-z planes. The size of "
+              "the scatter plots corresponds to their relative virtual "
+              "mass (the product of size and mean intensity). "
+              "As such larger circles in the plot correspond to a higher"
+              " weight in the final COM calculation. The circles color "
+              "is randomly pulled from a lookup table and is used to "
+              "differ between overlapping circles.")
+    visparse = subparsers.add_parser("visualize", description=visdes)
     # parse arguments
     parseparse.add_argument("-d", "--directory", metavar="Input directory",
                             help=("Only use either -d or -f, files are read in"
@@ -247,11 +258,45 @@ def comred_args():
                           help=("Toggles writing a control plot to check "
                                 "the accuracy of the inverse transform "
                                 "sampling."))
+    # visualize arguments
+    visparse.add_argument("-o", "--output_directory", metavar=("Output "
+                                                               "directory"),
+                          help=("Set the output directory, where results"
+                                " will be saved, required parameter"),
+                          required=True)
+    visparse.add_argument("-f", "--output_filename", metavar=("Output "
+                                                              "filename"),
+                          help=("Set a filename scheme for output files"))
+    visparse.add_argument("-r", "--receptors", metavar="Receptor directory",
+                          help=("Directory containing the receptor files, "
+                                "all .comred files in the directory will be "
+                                "read in, so use a different directory for"
+                                " the reference files, required parameter"),
+                          required=True)
+    visparse.add_argument("-n", "--reference", metavar=("Nucleus/Reference"
+                                                        " directory"),
+                          help=("Directory containing the reference (usually"
+                                " nucleus) files, all .comred files in the "
+                                "directory will be read in, so use a "
+                                "different directory for the receptor"
+                                " files, required parameter"), required=True)
+    visparse.add_argument("-x", "--x_resolution", metavar=("X-resolution"),
+                          help=("x Resolution in micrometer per pixel"
+                                ", required parameter"),
+                          required=True, type=float)
+    visparse.add_argument("-y", "--y_resolution", metavar=("Y-resolution"),
+                          help=("y Resolution in micrometer per pixel"
+                                ", required parameter"),
+                          required=True, type=float)
+    visparse.add_argument("-z", "--z_resolution", metavar=("Z-resolution"),
+                          help=("Z-Resolution in micrometer per pixel"
+                                ", required parameter"),
+                          required=True, type=float)
     args = parser.parse_args()
     if args.script == "parse":
         print("Parsing files...")
         if args.directory:
-            par.parser_sv.parse_sv_directory(
+            par.parse_sv_directory(
                 directory_name=args.directory, column_x=int(args.x_column),
                 column_y=int(args.y_column), column_z=int(args.z_column),
                 column_vol=int(args.size_column),
@@ -259,12 +304,10 @@ def comred_args():
                 output_directory_name=args.output, counting=args.counting,
                 dattype=args.type, verbose=args.verbose)
         elif args.file:
-            par.parser_sv.parse_sv(args.file, args.x_column, args.y_column,
-                                   args.z_column, args.size_column,
-                                   args.meanint_column,
-                                   output_file_name=args.output,
-                                   counting=args.counting, dattype=args.type,
-                                   verbose=args.verbose)
+            par.parse_sv(args.file, args.x_column, args.y_column,
+                         args.z_column, args.size_column, args.meanint_column,
+                         output_file_name=args.output, counting=args.counting,
+                         dattype=args.type, verbose=args.verbose)
         else:
             print("Please provide a file (-f) or a directory (-d)\n")
             sys.exit()
@@ -312,6 +355,12 @@ def comred_args():
                            input_directory=args.input,
                            reference_directory=args.reference,
                            filehandle=args.filehandle, n_list=args.n_list)
+    elif args.script == "visualize":
+        output_filename = args.output_filename + ".pdf"
+        output_filepath = os.path.join(args.output_directory, output_filename)
+        vis.read_out_cells(args.receptors, args.reference, args.x_resolution,
+                           args.y_resolution, args.z_resolution,
+                           output_filepath)
 
 
 # -----------------------------------------------------------------------------

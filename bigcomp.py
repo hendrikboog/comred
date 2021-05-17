@@ -6,7 +6,7 @@ import numpy as np
 import scipy.stats as sps
 import math
 import argparse
-from dist_calc import dist_calc as dc
+import dist_calc as dc
 import progressbar
 
 
@@ -16,11 +16,11 @@ def stars(p):
     # used to produce the stars on the boxplots
     if p < 0.0001:
         return "****"
-    elif (p < 0.001):
+    elif p < 0.001:
         return "***"
-    elif (p < 0.01):
+    elif p < 0.01:
         return "**"
-    elif (p < 0.05):
+    elif p < 0.05:
         return "*"
     else:
         return "-"
@@ -189,7 +189,7 @@ def create_big_plot_bw(output_filename, output_directory, filelist, rows, cols,
 # -----------------------------------------------------------------------------
 
 def make_big_comparison_plot():
-    description = ("ComRed 0.3 - Last update: 2021-03-25 - Script for "
+    description = ("ComRed 0.3 - Last update: 2021-05-14 - Script for "
                    "comparing n pairs of receptor distributions. The plot "
                    "can be divided into subplots (for example for comparing "
                    "different distributions) with n pairs that are compared.")
