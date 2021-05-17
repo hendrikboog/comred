@@ -6,7 +6,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import scipy.stats as sps
 import math
-from dist_calc import dist_calc as dc
+import dist_calc as dc
 import argparse
 import progressbar
 
@@ -16,11 +16,11 @@ import progressbar
 def stars(p):
     if p < 0.0001:
         return "****"
-    elif (p < 0.001):
+    elif p < 0.001:
         return "***"
-    elif (p < 0.01):
+    elif p < 0.01:
         return "**"
-    elif (p < 0.05):
+    elif p < 0.05:
         return "*"
     else:
         return "-"
@@ -65,8 +65,7 @@ def make_space_above(axes, topmargin=1):
         titles, without changing the axes sizes"""
     fig = axes.flatten()[0].figure
     s = fig.subplotpars
-    w, h = fig.get_size_inches()
-
+    h = fig.get_size_inches()[1]
     figh = h - (1-s.top)*h + topmargin
     fig.subplots_adjust(bottom=s.bottom*h/figh, top=1-topmargin/figh)
     fig.set_figheight(figh)
@@ -203,7 +202,7 @@ def invisplot():
 # -----------------------------------------------------------------------------
 
 def make_comparison_boxplots():
-    description = ("ComRed 0.3 - Last update: 2021-03-25 - Script for "
+    description = ("ComRed 0.3 - Last update: 2021-05-14 - Script for "
                    "comparing two sets of receptor datasets and produce "
                    "boxplot figures")
     parser = argparse.ArgumentParser(description=description)

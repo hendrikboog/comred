@@ -160,3 +160,29 @@ optional arguments:
                         Directory filepath for your reference files. All .comred files in the input directory will be read. Only required with -w to write files
   -c, --control         Toggles writing a control plot to check the accuracy of the inverse transform sampling.
 ```
+
+You can visualize your raw data. After parsing your .csv or .tsv files you can use the visualize command to generate plots for all your parsed files, which shows dots of the found receptor accumulations, where the positions correspond to the positions in their x-y, x-z, or y-z projections and their sizes corresponding to their virtual masses (the weight they have for the final center of mass).
+
+```
+usage: comred.py visualize [-h] -o Output directory [-f Output filename] -r Receptor directory -n Nucleus/Reference
+                           directory -x X-resolution -y Y-resolution -z Z-resolution
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o Output directory, --output_directory Output directory
+                        Set the output directory, where results will be saved, required parameter
+  -f Output filename, --output_filename Output filename
+                        Set a filename scheme for output files
+  -r Receptor directory, --receptors Receptor directory
+                        Directory containing the receptor files, all .comred files in the directory will be read in,
+                        so use a different directory for the reference files, required parameter
+  -n Nucleus/Reference directory, --reference Nucleus/Reference directory
+                        Directory containing the reference (usually nucleus) files, all .comred files in the directory
+                        will be read in, so use a different directory for the receptor files, required parameter
+  -x X-resolution, --x_resolution X-resolution
+                        x Resolution in micrometer per pixel, required parameter
+  -y Y-resolution, --y_resolution Y-resolution
+                        y Resolution in micrometer per pixel, required parameter
+  -z Z-resolution, --z_resolution Z-resolution
+                        Z-Resolution in micrometer per pixel, required parameter
+```

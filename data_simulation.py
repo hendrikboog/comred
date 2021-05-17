@@ -446,7 +446,8 @@ def receptor_dist_mod_big_plot(input_directory, output_filepath, title,
         form1.axis("off")
         form2 = plt.subplot(gs[2])
         form2txt = (r"$ x_{new} = x_{real} + $"
-        r"$\frac{n \cdot \overline{x} \cdot (x_{rnd} - \overline{x})}{b} $")
+                    r"$\frac{n \cdot \overline{x} \cdot (x_{rnd} - "
+                    r"\overline{x})}{b} $")
         form2.text(0.5, 0.5, form2txt, fontsize=30,
                    horizontalalignment="center", verticalalignment="center")
         form2.axis("off")
@@ -542,7 +543,7 @@ def write_files(output_directory, input_directory, reference_directory,
 # ----------------------------------------------------------------------------
 
 def data_simulation():
-    description = ("ComRed 0.3 - Last update: 2021-03-25 - ComReds Data"
+    description = ("ComRed 0.3 - Last update: 2021-05-14 - ComReds Data"
                    " simulation script - The script uses original data to "
                    "generate simulated distributions via inverse transform"
                    " sampling.")
