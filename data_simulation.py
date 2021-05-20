@@ -18,6 +18,8 @@ import argparse
 from pathlib import Path
 from datetime import date
 import progressbar
+import dist_calc as dc
+import itertools
 
 
 # ----------------------------------------------------------------------------
@@ -61,55 +63,16 @@ def make_histogram_o(data_list, xlabel, title, color, bins, linestyle, label):
     return outbins, n
 
 
-# ----------------------------------------------------------------------------
-
-def read_comred(filename):
-    # reads a comred file and transfers the data into a list
-    with open(filename, "r") as comred_file:
-        comvals = []
-        iter_comred_file = iter(comred_file)
-        next(iter_comred_file)
-        for line in iter_comred_file:
-            line = line.strip("\n")
-            line = line.split("\t")
-            virtualmass = float(line[4]) * float(line[5])
-            masspos_x = float(line[1]) * virtualmass
-            masspos_y = float(line[2]) * virtualmass
-            masspos_z = float(line[3]) * virtualmass
-            values = [line[0], virtualmass, masspos_x, masspos_y,
-                      masspos_z, line[1], line[2], line[3], line[4],
-                      line[5]]
-            comvals.append(values)
-        return comvals
-
-
-# ----------------------------------------------------------------------------
-
-# Reads all files from a directory with the .csv expansion,
-# returns list of files
-def COM_read_directory_files(directory_name, ending):
-    filelist = []
-    for filename in os.listdir(directory_name):
-        if filename.endswith(ending):
-            filelist.append(os.path.join(directory_name, filename))
-    return filelist
-
-
 # ---------------------------------------------------------------------------
 
 def create_data(directory_name):
-    filelist = COM_read_directory_files(directory_name, ".comred")
-    dataallfiles = []
-    datapoint_stat = []
+    filelist = dc.COM_read_directory_files(directory_name, ".comred")
+    dataallfiles, datapoint_stat = [], []
     for element in filelist:
-        data_in_file = read_comred(element)
+        data_in_file = dc.read_comred(element)
         datapoint_stat.append(len(data_in_file))
         dataallfiles.append(data_in_file)
-    x = []
-    y = []
-    z = []
-    vol = []
-    meanint = []
+    x, y, z, vol, meanint = [], [], [], [], []
     mean_datpoint = np.mean(datapoint_stat)
     std_datpoint = np.std(datapoint_stat)
     for element in dataallfiles:
@@ -149,8 +112,12 @@ def histogram_intersection(hist1, hist2):  # not working correctly??
 def hellinger(f1, f2):
     # f1 and f2 need to be np.histogram hists with the same bin edges
     hell = 0
-    for element in range(0, len(f1) - 1, 1):
-        hell += (np.sqrt(f1[element]) - np.sqrt(f2[element]))**2
+    for fel1, fel2 in zip(f1, f2):
+        hell += (np.sqrt(fel1) - np.sqrt(fel2))**2
+# =============================================================================
+#     for element in range(0, len(f1) - 1, 1):
+#         hell += (np.sqrt(f1[element]) - np.sqrt(f2[element]))**2
+# =============================================================================
     hell = 1 / (np.sqrt(2)*len(f1)) * np.sqrt(hell)
     return hell
 
@@ -160,16 +127,8 @@ def hellinger(f1, f2):
 def double_hist(f1, f2, xmin, xmax):
     y1, bn1 = np.histogram(f1, bins=50)
     y2, bn2 = np.histogram(f2, bins=50)
-    y = []
-    bins = []
-    for el in y1:
-        y.append(el)
-    for el in y2:
-        y.append(el)
-    for el in bn1:
-        bins.append(el)
-    for el in bn2:
-        bins.append(el)
+    # y = list(itertools.chain(y1, y2))
+    bins = list(itertools.chain(bn1, bn2))
     bins.sort()
     binmin = min(bins)
     binmax = max(bins)
@@ -178,11 +137,7 @@ def double_hist(f1, f2, xmin, xmax):
                               "Original data")
     o2, n2 = make_histogram_o(f2, "", "", "orange", outbins, "-",
                               "Model data")
-    n = []
-    for el in n1:
-        n.append(el)
-    for el in n2:
-        n.append(el)
+    n = list(itertools.chain(n1, n2))
     # if len(f1) == len(f2):
     cosine = scp.spatial.distance.pdist([f1, f2], metric="cosine")[0]
     # else:
@@ -288,7 +243,7 @@ def compare_histograms(x, y, z, vol, meanint, output_filepath, title,
 
 def write_files_receptor(input_filepath, output_filepath, output_filename,
                          num_bins=1000, n=0, change_type="shift", n2=0):
-    filelist = COM_read_directory_files(input_filepath, ".comred")
+    filelist = dc.COM_read_directory_files(input_filepath, ".comred")
     x, y, z, vol, meanint, mean_datpoint, std_datpoint = create_data(
         input_filepath)
     if change_type == "shift":
@@ -331,7 +286,7 @@ def write_files_receptor(input_filepath, output_filepath, output_filename,
 
 def write_files_nucleus(input_filepath, output_filepath, output_filename,
                         num_bins=1000, n=0):
-    filelist = COM_read_directory_files(input_filepath, ".comred")
+    filelist = dc.COM_read_directory_files(input_filepath, ".comred")
     x, y, z, vol, meanint, mean_datpoint, std_datpoint = create_data(
         input_filepath)
     nx = change_data_shift(x, n)
@@ -413,9 +368,9 @@ def change_data_spread(data, n):
         bin_edge = ledge
     else:
         bin_edge = redge
-    for counter in range(0, len(data), 1):
+    for counter, element in enumerate(data):
         rand = (distrib[counter] - meandat) / bin_edge
-        y = data[counter] + n*rand*meandat
+        y = element + n*rand*meandat
         new_data.append(y)
     return new_data
 

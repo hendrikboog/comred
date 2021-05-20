@@ -8,50 +8,7 @@ import math
 import argparse
 import dist_calc as dc
 import progressbar
-
-
-# -----------------------------------------------------------------------------
-
-def stars(p):
-    # used to produce the stars on the boxplots
-    if p < 0.0001:
-        return "****"
-    elif p < 0.001:
-        return "***"
-    elif p < 0.01:
-        return "**"
-    elif p < 0.05:
-        return "*"
-    else:
-        return "-"
-
-
-# -----------------------------------------------------------------------------
-
-def mwu_effectsize(x, y):
-    # calculating the mann-whitney-u-test and effect sizes
-    x_mean = np.mean(x)
-    y_mean = np.mean(y)
-    x_std = np.std(x)
-    y_std = np.std(y)
-    n_x = len(x)
-    n_y = len(y)
-    u, pval = sps.mannwhitneyu(x, y, use_continuity=True,
-                               alternative="two-sided")
-    d = math.fabs((x_mean - y_mean)/(math.sqrt(((n_x - 1) * x_std ** 2
-                                                + (n_y + 1) * y_std ** 2)
-                                               / (n_x + n_y - 2))))
-    z = (u - n_x * n_y / 2)/(math.sqrt(n_x * n_y * (n_x + n_y + 1)/12))
-    r = math.fabs(z/math.sqrt(n_x + n_y))
-    return pval, d, r, x_mean, y_mean, x_std, y_std, n_x, n_y
-
-
-# -----------------------------------------------------------------------------
-
-def invisplot():
-    frame1 = plt.gca()
-    frame1.axes().get_xaxis().set_visible(False)
-    frame1.axes().get_yaxis().set_visible(False)
+import two_comp as tc
 
 
 # -----------------------------------------------------------------------------
@@ -72,8 +29,8 @@ def boxplot_all_bw(ylabel, title, datanames, datalists, legend):
     ymax = y2 + (math.fabs(np.min(ymin)) + math.fabs(y2)) * 0.33
     # * 0.25 or 0.35
     for element in datalists:
-        p = mwu_effectsize(element[0], element[1])[0]
-        sp = stars(p)
+        p = tc.mwu_effectsize(element[0], element[1])[0]
+        sp = tc.stars(p)
         box = plt.boxplot([element[0], element[1]], positions=[x, (x+1)],
                           patch_artist=True, flierprops={"markersize": 4,
                           "markeredgecolor": "None", "marker": "."},
@@ -108,7 +65,6 @@ def boxplot_all_bw(ylabel, title, datanames, datalists, legend):
     axes.set_xlim([0, x-1])
     plt.title(title, fontsize=20)
     plt.ylabel(ylabel, fontsize=14)
-    # plt.xlabel("Conditions")
     labels = [""]
     for elementastimo in datanames:
         labels.append(elementastimo)

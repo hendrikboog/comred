@@ -29,6 +29,7 @@ def stars(p):
 # -----------------------------------------------------------------------------
 
 def mwu_effectsize(x, y):
+    # calculating the mann-whitney-u-test and effect sizes
     x_mean = np.mean(x)
     y_mean = np.mean(y)
     x_std = np.std(x)
@@ -56,19 +57,6 @@ def mwu_text(x, y, name_x, name_y):
                                                    x_std, name_y, y_std,
                                                    name_x, n_x, name_y, n_y)
     return textstr
-
-
-# -----------------------------------------------------------------------------
-
-def make_space_above(axes, topmargin=1):
-    """ increase figure size to make topmargin (in inches) space for
-        titles, without changing the axes sizes"""
-    fig = axes.flatten()[0].figure
-    s = fig.subplotpars
-    h = fig.get_size_inches()[1]
-    figh = h - (1-s.top)*h + topmargin
-    fig.subplots_adjust(bottom=s.bottom*h/figh, top=1-topmargin/figh)
-    fig.set_figheight(figh)
 
 
 # -----------------------------------------------------------------------------
