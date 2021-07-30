@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import argparse
 import progressbar
+from textwrap import wrap
 
 
 # -----------------------------------------------------------------------------
@@ -36,10 +37,10 @@ def calculate_com_from_comvals(comvals):
     sum_virtualmass, sum_masspos_x, sum_masspos_y = 0, 0, 0
     sum_masspos_z = 0
     for element in comvals:
-        sum_virtualmass = sum_virtualmass + element[1]
-        sum_masspos_x = sum_masspos_x + element[2]
-        sum_masspos_y = sum_masspos_y + element[3]
-        sum_masspos_z = sum_masspos_z + element[4]
+        sum_virtualmass += element[1]
+        sum_masspos_x += element[2]
+        sum_masspos_y += element[3]
+        sum_masspos_z += element[4]
     center_of_mass_pic_x = sum_masspos_x / sum_virtualmass
     center_of_mass_pic_y = sum_masspos_y / sum_virtualmass
     center_of_mass_pic_z = sum_masspos_z / sum_virtualmass
@@ -97,10 +98,9 @@ def COM_comparison_with_nucleus(receptor_file, nucleus_file, resolution_x,
 # Reads all files from a directory with the .csv expansion, returns list of
 # files
 def COM_read_directory_files(directory_name, ending):
-    filelist = []
-    for filename in os.listdir(directory_name):
-        if filename.endswith(ending):
-            filelist.append(os.path.join(directory_name, filename))
+    filelist = [os.path.join(directory_name, filename)
+                for filename in os.listdir(directory_name)
+                if filename.endswith(ending)]
     return filelist
 
 
@@ -115,25 +115,20 @@ def Calculate_COMs_from_directories(receptor_directory, nucleus_directory,
     nuclei_filelist = COM_read_directory_files(nucleus_directory, ".comred")
     COM_value_list = []
     distance_value_list = []
-    rn_filelist = []
-    filenumber = 0
-    for filenumber in range(0, len(receptor_filelist)):
-        new_entry = [receptor_filelist[filenumber],
-                     nuclei_filelist[filenumber]]
-        rn_filelist.append(new_entry)
+    rn_filelist = [
+        [receptor, nucleus]
+        for receptor, nucleus
+        in zip(receptor_filelist, nuclei_filelist)]
     with progressbar.ProgressBar(max_value=len(rn_filelist)) as bar:
-        count = 0
-        for filepair in rn_filelist:
+        for count, filepair in enumerate(rn_filelist):
             if verbose:
-                print("Calculating filepair: {} and {}".format(
-                    filepair[0], filepair[1]))
+                print(f"Calculating filepair: {filepair[0]} and {filepair[1]}")
             COM_value_list.append(COM_comparison_with_nucleus(
                     filepair[0], filepair[1], resolution_x, resolution_y,
                     resolution_z))
             distance_value_list.append(calculate_spread_from_comvals(
                     read_comred(filepair[0]), resolution_x,
                     resolution_y, resolution_z))
-            count += 1
             bar.update(count)
     return COM_value_list, distance_value_list
 
@@ -164,9 +159,7 @@ def COMs_statistics_csv(value_list):
 # Calculate_COMs_from_directories funcion
 def COMs_statistics_distance(value_list):
     # for the list of values coming out of Calculate_COM_from_directories
-    values_distance = []
-    for value in value_list:
-        values_distance.append(value)
+    values_distance = [value for value in value_list]
     end_data = [numpy.mean(values_distance), numpy.std(values_distance)]
     return end_data
 
@@ -175,8 +168,7 @@ def COMs_statistics_distance(value_list):
 
 # Convertes Pixel values in micrometer
 def Conversion_Pixel_micrometer(number_in_pixels, micrometer_per_pixel):
-    Micrometer = float(number_in_pixels) * float(micrometer_per_pixel)
-    return Micrometer
+    return float(number_in_pixels) * float(micrometer_per_pixel)
 
 
 # -----------------------------------------------------------------------------
@@ -188,8 +180,8 @@ def make_file_with_COMs(output_filename, output_directory,
                         resolution_x, resolution_y, resolution_z,
                         verbose=0):
     print("Constructing whole cell center of mass file...")
-    output_filepath = "".join([output_directory, "\\", output_filename,
-                               ".txt"])
+    output_filename = f"{output_filename}.txt"
+    output_filepath = os.path.join(output_directory, output_filename)
     values_com, value_distance = Calculate_COMs_from_directories(
             receptor_directory, nucleus_directory, resolution_x,
             resolution_y, resolution_z, verbose)
@@ -201,19 +193,16 @@ def make_file_with_COMs(output_filename, output_directory,
         alph = ["x", "y", "z"]
         for count, element in enumerate(end_values):
             if count <= 2:
-                mean_r = ("#Mean_Difference_{}:\t{}\n#"
-                          "Standarddeviation_{}:\t{}\n").format(
-                              alph[count], element[0], alph[count],
-                              element[1])
+                mean_r = (f"#Mean_Difference_{alph[count]}:\t{element[0]}\n#"
+                          f"Standarddeviation_{alph[count]}:\t{element[1]}\n")
                 output_file.write(mean_r)
             else:
-                mean_r = ("#Mean_Arithmetic_difference:\t{}\n"
+                mean_r = (f"#Mean_Arithmetic_difference:\t{element[0]}\n"
                           "#Standarddeviation_Arithmetic_difference:"
-                          "\t{}\n").format(element[0], element[1])
+                          f"\t{element[1]}\n")
                 output_file.write(mean_r)
-        write_distance = ("#Mean spread distance:\t{}\n"
-                          "#Standarddeviation:\t{}\n\n").format(
-                              end_vals_d[0], end_vals_d[1])
+        write_distance = (f"#Mean spread distance:\t{end_vals_d[0]}\n"
+                          f"#Standarddeviation:\t{end_vals_d[1]}\n\n")
         output_file.write(write_distance)
         heading = ("#Difference_x\tDifference_y"
                    "\tDifference_z\tArithmetic_difference\t"
@@ -221,11 +210,8 @@ def make_file_with_COMs(output_filename, output_directory,
         output_file.write(heading)
         count = 0
         for line in zip(values_com, value_distance):
-            write_val = "{}\t{}\t{}\t{}\t{}\n".format(line[0][0],
-                                                      line[0][1],
-                                                      line[0][2],
-                                                      line[0][3],
-                                                      line[1])
+            write_val = (f"{line[0][0]}\t{line[0][1]}\t{line[0][2]}"
+                         f"\t{line[0][3]}\t{line[1]}\n")
             output_file.write(write_val)
     print("File successfully written")
 
@@ -256,8 +242,7 @@ def make_totals_from_columnvalues(columnvalues_list):
 
 def make_histogram(data_list, xlabel, title, color):
     bins = numpy.linspace(min(data_list), max(data_list), 20)
-    plt.hist(data_list, density=0, bins=bins,
-             color=color, edgecolor="none")
+    plt.hist(data_list, density=0, bins=bins, color=color, edgecolor="none")
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel('Count')
@@ -290,14 +275,8 @@ def read_output_data_whole_cell_COM(filepath):
         end_values = []
         for i in range(16):
             next(file)
-        for line in file:
-            values = []
-            line = line.strip()
-            if line:
-                line = line.split("\t")
-                for element in line:
-                    values.append(float(element))
-            end_values.append(values)
+        end_values = [[float(element) for element in line.split("\t")]
+                      for line in file if line]
         return end_values
 
 
@@ -320,10 +299,7 @@ def sort_whole_cell_COM_values(filename):
 
 def sort_distance_COM_values(filename):
     values = read_output_data_whole_cell_COM(filename)
-    distances = []
-    for elements in values:
-        if elements:
-            distances.append(elements[4])
+    distances = [element[4] for element in values]
     return distances
 
 
@@ -332,15 +308,14 @@ def sort_distance_COM_values(filename):
 def create_plots_whole_cell_COMs(output_filename, output_directory,
                                  input_filepath, color):
     print("Creating Whole Cell Center of Mass plots...")
-    output_filepath = "".join([output_directory, "\\", output_filename,
-                              ".pdf"])
+    output_filename = f"{output_filename}.pdf"
+    output_filepath = os.path.join(output_directory, output_filename)
     with PdfPages(output_filepath) as pdf:
         with progressbar.ProgressBar(max_value=10) as bar:
             total_values = sort_whole_cell_COM_values(input_filepath)
             fig = plt.figure(figsize=(8, 5))
-            figtitle = ("Histograms of total values from "
-                        + str(input_filepath))
-            plt.suptitle(figtitle)
+            figtitle = f"Histograms of total values from {input_filepath}"
+            plt.suptitle(figtitle, loc="center", wrap=True)
             plt.subplot(221)
             make_histogram(total_values[0], "Difference [µm]", "x-Direction",
                            color)
@@ -361,9 +336,8 @@ def create_plots_whole_cell_COMs(output_filename, output_directory,
             pdf.savefig()
             plt.close(fig)
             fig = plt.figure(figsize=(8, 5))
-            figtitle = ("Boxplots of total values from "
-                        + str(input_filepath))
-            plt.suptitle(figtitle)
+            figtitle = f"Boxplots of total values from {input_filepath}"
+            plt.suptitle(figtitle, loc="center", wrap=True)
             plt.subplot(221)
             make_boxplot(total_values[0], "Difference [µm]",
                          "x-Direction", color)
@@ -385,9 +359,8 @@ def create_plots_whole_cell_COMs(output_filename, output_directory,
             plt.close(fig)
             distances = sort_distance_COM_values(input_filepath)
             fig = plt.figure(figsize=(5, 8))
-            figtitle = ("Mean distance of accumulations in "
-                        + str(input_filepath))
-            plt.suptitle(figtitle)
+            figtitle = f"Mean distance of accumulations in {input_filepath}"
+            plt.suptitle(figtitle, loc="center", wrap=True)
             plt.subplot(211)
             make_histogram(distances, "Difference [µm]",
                            "Mean distance of receptors to their COM", color)
@@ -414,23 +387,25 @@ def generate_COM_data_from_directories():
                                                              "directory"),
                         help=("Set the output directory, where results"
                               " will be saved, required parameter"),
-                        required=True)
+                        required=True, type=str)
     parser.add_argument("-f", "--output_filename", metavar=("Output "
                                                             "filename"),
-                        help=("Set a filename scheme for output files"))
+                        help=("Set a filename scheme for output files"),
+                        required=True, type=str)
     parser.add_argument("-r", "--receptors", metavar="Receptor directory",
                         help=("Directory containing the receptor files, "
                               "all .comred files in the directory will be "
                               "read in, so use a different directory for"
                               " the reference files, required parameter"),
-                        required=True)
+                        required=True, type=str)
     parser.add_argument("-n", "--reference", metavar=("Nucleus/Reference"
                                                       " directory"),
                         help=("Directory containing the reference (usually"
                               " nucleus) files, all .comred files in the "
                               "directory will be read in, so use a "
                               "different directory for the receptor"
-                              " files, required parameter"), required=True)
+                              " files, required parameter"), required=True,
+                        type=str)
     parser.add_argument("-x", "--x_resolution", metavar=("X-resolution"),
                         help=("x Resolution in micrometer per pixel"
                               ", required parameter"),
@@ -444,14 +419,14 @@ def generate_COM_data_from_directories():
                               ", required parameter"),
                         required=True, type=float)
     parser.add_argument("-c", "--color", metavar=("Plot color"),
-                        help=("Color of histograms and boxplots"))
-    parser.add_argument("-v", "--verbose", action=("store_true"),
+                        help=("Color of histograms and boxplots"), type=str)
+    parser.add_argument("-v", "--verbose", action="store_true",
                         help=("More details while running the program"))
     args = parser.parse_args()
     make_file_with_COMs(args.output_filename, args.output_directory,
                         args.receptors, args.reference, args.x_resolution,
                         args.y_resolution, args.z_resolution, args.verbose)
-    input_filename = args.output_filename + ".txt"
+    input_filename = f"{args.output_filename}.txt"
     input_filepath_whole_cell = os.path.join(args.output_directory,
                                              input_filename)
     create_plots_whole_cell_COMs(args.output_filename, args.output_directory,

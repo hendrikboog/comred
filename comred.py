@@ -79,9 +79,9 @@ def comred_args():
     # parse arguments
     parseparse.add_argument("-d", "--directory", metavar="Input directory",
                             help=("Only use either -d or -f, files are read in"
-                                  " automatically"))
+                                  " automatically"), type=str)
     parseparse.add_argument("-f", "--file", metavar="Input file",
-                            help="Only use either -d or -f")
+                            help="Only use either -d or -f", type=str)
     parseparse.add_argument("-t", "--type",
                             choices=[".csv", "csv", ".tsv", "tsv"],
                             default=".csv", metavar=("filetype"))
@@ -108,8 +108,9 @@ def comred_args():
                             metavar="Mean intensity Column")
     parseparse.add_argument("-o", "--output", required=True,
                             metavar="Output folder",
-                            help=("Output folder for resulting .comred files"))
-    parseparse.add_argument("-c", "--counting", action=("store_true"),
+                            help=("Output folder for resulting .comred files"),
+                            type=str)
+    parseparse.add_argument("-c", "--counting", action="store_true",
                             help=("Start counting the columns from 1 not 0"))
     parseparse.add_argument("-v", "--verbose", action=("store_true"),
                             help=("More details while running the program"))
@@ -118,23 +119,25 @@ def comred_args():
                                                                 "directory"),
                            help=("Set the output directory, where results"
                                  " will be saved, required parameter"),
-                           required=True)
+                           required=True, type=str)
     calcparse.add_argument("-f", "--output_filename", metavar=("Output "
                                                                "filename"),
-                           help=("Set a filename scheme for output files"))
+                           help=("Set a filename scheme for output files"),
+                           required=True, type=str)
     calcparse.add_argument("-r", "--receptors", metavar="Receptor directory",
                            help=("Directory containing the receptor files, "
                                  "all .comred files in the directory will be "
                                  "read in, so use a different directory for"
                                  " the reference files, required parameter"),
-                           required=True)
+                           required=True, type=str)
     calcparse.add_argument("-n", "--reference", metavar=("Nucleus/Reference"
                                                          " directory"),
                            help=("Directory containing the reference (usually"
                                  " nucleus) files, all .comred files in the "
                                  "directory will be read in, so use a "
                                  "different directory for the receptor"
-                                 " files, required parameter"), required=True)
+                                 " files, required parameter"), required=True,
+                           type=str)
     calcparse.add_argument("-x", "--x_resolution", metavar=("X-resolution"),
                            help=("x Resolution in micrometer per pixel"
                                  ", required parameter"),
@@ -148,8 +151,9 @@ def comred_args():
                                  ", required parameter"),
                            required=True, type=float)
     calcparse.add_argument("-c", "--color", metavar=("Plot color"),
-                           help=("Color of histograms and boxplots"))
-    calcparse.add_argument("-v", "--verbose", action=("store_true"),
+                           help=("Color of histograms and boxplots"),
+                           required=True, type=str)
+    calcparse.add_argument("-v", "--verbose", action="store_true",
                            help=("More details while running the program"))
     # comp arguments
     compparse.add_argument("-o", "--output_directory", metavar=("Output "
@@ -252,8 +256,7 @@ def comred_args():
                           help=("Directory filepath for your reference files."
                                 " All .comred files in the input directory "
                                 "will be read. Only required with -w to write"
-                                " files"),
-                          required=True,  type=str)
+                                " files"), type=str)
     simparse.add_argument("-c", "--control", action="store_true",
                           help=("Toggles writing a control plot to check "
                                 "the accuracy of the inverse transform "
@@ -317,8 +320,9 @@ def comred_args():
                                args.receptors, args.reference,
                                args.x_resolution, args.y_resolution,
                                args.z_resolution, args.verbose)
-        input_filepath_whole_cell = (args.output_directory + "\\"
-                                     + args.output_filename + ".txt")
+        input_filename = f"{args.output_filename}.txt"
+        input_filepath_whole_cell = os.path.join(args.output_directory,
+                                                 input_filename)
         dc.create_plots_whole_cell_COMs(args.output_filename,
                                         args.output_directory,
                                         input_filepath_whole_cell, args.color)
@@ -344,7 +348,7 @@ def comred_args():
                               cols=args.pairs, figtitle=args.title,
                               titles=args.subtitle, legends=legends)
     elif args.script == "sim":
-        pdf_handle = args.filename + ".pdf"
+        pdf_handle = f"{args.filename}.pdf"
         pdf_filepath = os.path.join(args.output, pdf_handle)
         ds.receptor_dist_mod_big_plot(input_directory=args.input,
                                       output_filepath=pdf_filepath,
@@ -356,7 +360,7 @@ def comred_args():
                            reference_directory=args.reference,
                            filehandle=args.filehandle, n_list=args.n_list)
     elif args.script == "visualize":
-        output_filename = args.output_filename + ".pdf"
+        output_filename = f"{args.output_filename}.pdf"
         output_filepath = os.path.join(args.output_directory, output_filename)
         vis.read_out_cells(args.receptors, args.reference, args.x_resolution,
                            args.y_resolution, args.z_resolution,

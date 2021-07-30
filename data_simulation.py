@@ -18,6 +18,8 @@ import argparse
 from pathlib import Path
 from datetime import date
 import progressbar
+import dist_calc as dc
+import itertools
 
 
 # ----------------------------------------------------------------------------
@@ -61,55 +63,16 @@ def make_histogram_o(data_list, xlabel, title, color, bins, linestyle, label):
     return outbins, n
 
 
-# ----------------------------------------------------------------------------
-
-def read_comred(filename):
-    # reads a comred file and transfers the data into a list
-    with open(filename, "r") as comred_file:
-        comvals = []
-        iter_comred_file = iter(comred_file)
-        next(iter_comred_file)
-        for line in iter_comred_file:
-            line = line.strip("\n")
-            line = line.split("\t")
-            virtualmass = float(line[4]) * float(line[5])
-            masspos_x = float(line[1]) * virtualmass
-            masspos_y = float(line[2]) * virtualmass
-            masspos_z = float(line[3]) * virtualmass
-            values = [line[0], virtualmass, masspos_x, masspos_y,
-                      masspos_z, line[1], line[2], line[3], line[4],
-                      line[5]]
-            comvals.append(values)
-        return comvals
-
-
-# ----------------------------------------------------------------------------
-
-# Reads all files from a directory with the .csv expansion,
-# returns list of files
-def COM_read_directory_files(directory_name, ending):
-    filelist = []
-    for filename in os.listdir(directory_name):
-        if filename.endswith(ending):
-            filelist.append(os.path.join(directory_name, filename))
-    return filelist
-
-
 # ---------------------------------------------------------------------------
 
 def create_data(directory_name):
-    filelist = COM_read_directory_files(directory_name, ".comred")
-    dataallfiles = []
-    datapoint_stat = []
+    filelist = dc.COM_read_directory_files(directory_name, ".comred")
+    dataallfiles, datapoint_stat = [], []
     for element in filelist:
-        data_in_file = read_comred(element)
+        data_in_file = dc.read_comred(element)
         datapoint_stat.append(len(data_in_file))
         dataallfiles.append(data_in_file)
-    x = []
-    y = []
-    z = []
-    vol = []
-    meanint = []
+    x, y, z, vol, meanint = [], [], [], [], []
     mean_datpoint = np.mean(datapoint_stat)
     std_datpoint = np.std(datapoint_stat)
     for element in dataallfiles:
@@ -149,8 +112,12 @@ def histogram_intersection(hist1, hist2):  # not working correctly??
 def hellinger(f1, f2):
     # f1 and f2 need to be np.histogram hists with the same bin edges
     hell = 0
-    for element in range(0, len(f1) - 1, 1):
-        hell += (np.sqrt(f1[element]) - np.sqrt(f2[element]))**2
+    for fel1, fel2 in zip(f1, f2):
+        hell += (np.sqrt(fel1) - np.sqrt(fel2))**2
+# =============================================================================
+#     for element in range(0, len(f1) - 1, 1):
+#         hell += (np.sqrt(f1[element]) - np.sqrt(f2[element]))**2
+# =============================================================================
     hell = 1 / (np.sqrt(2)*len(f1)) * np.sqrt(hell)
     return hell
 
@@ -160,29 +127,18 @@ def hellinger(f1, f2):
 def double_hist(f1, f2, xmin, xmax):
     y1, bn1 = np.histogram(f1, bins=50)
     y2, bn2 = np.histogram(f2, bins=50)
-    y = []
-    bins = []
-    for el in y1:
-        y.append(el)
-    for el in y2:
-        y.append(el)
-    for el in bn1:
-        bins.append(el)
-    for el in bn2:
-        bins.append(el)
-    bins.sort()
-    binmin = min(bins)
-    binmax = max(bins)
-    outbins = np.linspace(binmin, binmax)
+    # y = list(itertools.chain(y1, y2))
+# =============================================================================
+#     bins = list(itertools.chain(bn1, bn2))
+#     binmin = min(bins)
+#     binmax = max(bins)
+# =============================================================================
+    outbins = np.linspace(xmin, xmax, num=100)
     o1, n1 = make_histogram_o(f1, "", "", "black", outbins, "-",
                               "Original data")
     o2, n2 = make_histogram_o(f2, "", "", "orange", outbins, "-",
                               "Model data")
-    n = []
-    for el in n1:
-        n.append(el)
-    for el in n2:
-        n.append(el)
+    n = list(itertools.chain(n1, n2))
     # if len(f1) == len(f2):
     cosine = scp.spatial.distance.pdist([f1, f2], metric="cosine")[0]
     # else:
@@ -191,21 +147,21 @@ def double_hist(f1, f2, xmin, xmax):
     hist2, bins2 = np.histogram(f2, bins=bins1)
     histol = histogram_intersection(hist1, hist2)
     hell = hellinger(hist1, hist2)
-    textges = ("Cosine distance: " + str(round(cosine, 5)) +
-               "\nHistogram overlap: " + str(round(histol, 5)) +
-               "\nHellinger distance: " + str(round(hell, 5)))
+    textges = ("Cosine distance: " + str(round(cosine, 4)) +
+               "\nHistogram overlap: " + str(round(histol, 4)) +
+               "\nHellinger distance: " + str(round(hell, 4)))
     # xbound = binmax - 0.14*binmax
     handle1 = Line2D([], [], c='black')
     handle2 = Line2D([], [], c='orange')
-    plt.legend(handles=[handle1, handle2], labels=["Experimental data",
-                                                   "Simulated data"],
-               loc="upper left", edgecolor="black", fontsize=15)
+    plt.legend(handles=[handle1, handle2],
+               labels=["Experiment", "Simulation"],
+               loc="upper left", edgecolor="black", fontsize=25)
     axes = plt.gca()
-    axes.set_ylim([0, 1.1*max(n)])
+    bottom, top = axes.set_ylim([0, 1.3*max(n)])
     axes.set_xlim([xmin, xmax])
     axes.tick_params(labelsize=15)
     # ybound = 1.1*max(n) - 0.05*1.1*max(n)
-    plt.text(0.98, 0.98, textges, size=15, transform=axes.transAxes,
+    plt.text(0.98, 0.98, textges, size=25, transform=axes.transAxes,
              ha="right", va="top", bbox=dict(boxstyle="round", ec="black",
                                              facecolor="white", alpha=0.5))
 
@@ -239,7 +195,7 @@ def compare_histograms(x, y, z, vol, meanint, output_filepath, title,
         meanintchanged = model_real(meanintchanged, num_bins,
                                     len(meanintchanged))
     else:
-        raise Exception("Type '{}' not recognized.".format(change),
+        raise Exception(f"Type '{change}' not recognized."
                         " Use 'shift' or 'spread'")
     xmin = min(min(xchanged), min(x))
     xmax = max(max(xchanged), max(x))
@@ -288,7 +244,7 @@ def compare_histograms(x, y, z, vol, meanint, output_filepath, title,
 
 def write_files_receptor(input_filepath, output_filepath, output_filename,
                          num_bins=1000, n=0, change_type="shift", n2=0):
-    filelist = COM_read_directory_files(input_filepath, ".comred")
+    filelist = dc.COM_read_directory_files(input_filepath, ".comred")
     x, y, z, vol, meanint, mean_datpoint, std_datpoint = create_data(
         input_filepath)
     if change_type == "shift":
@@ -303,12 +259,12 @@ def write_files_receptor(input_filepath, output_filepath, output_filename,
         nz = change_data_spread(z, n)
         nvol = change_data_shift(vol, n2)
         nmi = change_data_shift(meanint, n2)
-    print("Write receptor {} files...".format(change_type))
+    print(f"Write receptor {change_type} files...")
     # all vectors (x,y,z, etc) should have the same amount of data point
     with progressbar.ProgressBar(max_value=len(filelist)) as bar:
         for element in range(1, len(filelist)+1, 1):
-            fullpath = (output_filepath + "\\" + output_filename +
-                        str(element) + ".comred")
+            fullpath = os.path.join(output_filepath,
+                                    f"{output_filename}{str(element)}.comred")
             with open(fullpath, "w") as file:
                 file.write("#Count\tX\tY\tZ\tVolume\tMean Intensity\n")
                 number_data_per_file = int(np.random.normal(mean_datpoint,
@@ -319,10 +275,10 @@ def write_files_receptor(input_filepath, output_filepath, output_filename,
                 modelvol = model_real(nvol, num_bins, number_data_per_file)
                 modelmeanint = model_real(nmi, num_bins, number_data_per_file)
                 for el in range(0, number_data_per_file, 1):
-                    file.write(str(el) + "\t" + str(modelx[el]) + "\t" +
-                               str(modely[el]) + "\t" + str(modelz[el]) +
-                               "\t" + str(modelvol[el]) + "\t" +
-                               str(modelmeanint[el]) + "\n")
+                    file.write(f"{str(el)}\t{str(modelx[el])}\t"
+                               f"{str(modely[el])}\t{str(modelz[el])}\t"
+                               f"{str(modelvol[el])}\t{str(modelmeanint[el])}"
+                               "\n")
             bar.update(element)
     print("Done")
 
@@ -331,7 +287,7 @@ def write_files_receptor(input_filepath, output_filepath, output_filename,
 
 def write_files_nucleus(input_filepath, output_filepath, output_filename,
                         num_bins=1000, n=0):
-    filelist = COM_read_directory_files(input_filepath, ".comred")
+    filelist = dc.COM_read_directory_files(input_filepath, ".comred")
     x, y, z, vol, meanint, mean_datpoint, std_datpoint = create_data(
         input_filepath)
     nx = change_data_shift(x, n)
@@ -344,8 +300,8 @@ def write_files_nucleus(input_filepath, output_filepath, output_filename,
     # all vectors (x,y,z, etc) should have the same amount of data points
     with progressbar.ProgressBar(max_value=len(filelist)) as bar:
         for element in range(1, len(filelist)+1, 1):
-            fullpath = (output_filepath + "\\" + output_filename +
-                        str(element) + ".comred")
+            fullpath = os.path.join(output_filepath,
+                                    f"{output_filename}{str(element)}.comred")
             with open(fullpath, "w") as file:
                 file.write("#Count\tX\tY\tZ\tVolume\tMean Intensity\n")
                 modelx = model_real(nx, num_bins, number_data_per_file)
@@ -354,10 +310,10 @@ def write_files_nucleus(input_filepath, output_filepath, output_filename,
                 modelvol = model_real(nvol, num_bins, number_data_per_file)
                 modelmeanint = model_real(nmi, num_bins, number_data_per_file)
                 for el in range(0, number_data_per_file, 1):
-                    file.write(str(el) + "\t" + str(modelx[el]) + "\t" +
-                               str(modely[el]) + "\t" + str(modelz[el]) +
-                               "\t" + str(modelvol[el]) + "\t" +
-                               str(modelmeanint[el]) + "\n")
+                    file.write(f"{str(el)}\t{str(modelx[el])}\t"
+                               f"{str(modely[el])}\t{str(modelz[el])}\t"
+                               f"{str(modelvol[el])}\t{str(modelmeanint[el])}"
+                               "\n")
             bar.update(element)
     print("Done")
 
@@ -370,7 +326,7 @@ def create_output_folders(output_directory, directory_list):
     headfolder = "_".join(headlist)
     mainoutdir = os.path.join(output_directory, headfolder)
     for item in directories:
-        dirname = "n=" + item
+        dirname = f"n={item}"
         finalpath = os.path.join(mainoutdir, dirname)
         path_receptors = os.path.join(finalpath, "receptors")
         path_reference = os.path.join(finalpath, "reference")
@@ -413,9 +369,9 @@ def change_data_spread(data, n):
         bin_edge = ledge
     else:
         bin_edge = redge
-    for counter in range(0, len(data), 1):
+    for counter, element in enumerate(data):
         rand = (distrib[counter] - meandat) / bin_edge
-        y = data[counter] + n*rand*meandat
+        y = element + n*rand*meandat
         new_data.append(y)
     return new_data
 
@@ -430,7 +386,7 @@ def receptor_dist_mod_big_plot(input_directory, output_filepath, title,
     num_bins = 1000
     print("Creating histograms")
     with PdfPages(output_filepath) as pdf:
-        sizey = 8 * len(n_list)
+        sizey = 10 * len(n_list)
         fig = plt.figure(figsize=(25, sizey))
         height_ratios = [2]
         for element in n_list:
@@ -441,14 +397,14 @@ def receptor_dist_mod_big_plot(input_directory, output_filepath, title,
         # plt.subplot(gs[0])
         form1 = plt.subplot(gs[1])
         form1txt = r"$ x_{new} = x_{real} + n \cdot \overline{x} $"
-        form1.text(0.5, 0.5, form1txt, fontsize=30,
+        form1.text(0.5, 0, form1txt, fontsize=30,
                    horizontalalignment="center", verticalalignment="center")
         form1.axis("off")
         form2 = plt.subplot(gs[2])
         form2txt = (r"$ x_{new} = x_{real} + $"
                     r"$\frac{n \cdot \overline{x} \cdot (x_{rnd} - "
                     r"\overline{x})}{b} $")
-        form2.text(0.5, 0.5, form2txt, fontsize=30,
+        form2.text(0.5, 0, form2txt, fontsize=30,
                    horizontalalignment="center", verticalalignment="center")
         form2.axis("off")
         counter = 3
@@ -473,16 +429,16 @@ def receptor_dist_mod_big_plot(input_directory, output_filepath, title,
                                 "Do they contain .comred files?")
             if check:
                 parent_path = os.path.dirname(output_filepath)
-                check_filename_spread = "check_n={}_spread.pdf".format(element)
-                check_filename_shift = "check_n={}_shift.pdf".format(element)
+                check_filename_spread = f"check_n={element}_spread.pdf"
+                check_filename_shift = f"check_n={element}_shift.pdf"
                 check_output_shift = os.path.join(parent_path,
                                                   check_filename_shift)
                 check_output_spread = os.path.join(parent_path,
                                                    check_filename_spread)
                 title_spreadlist = [title, "Inverse Transform Sampling check",
-                                    "spread n={}".format(element)]
+                                    f"spread n={element}"]
                 title_shiftlist = [title, "Inverse Transform Sampling check",
-                                   "spread n={}".format(element)]
+                                   f"spread n={element}"]
                 title_check_spread = " ".join(title_spreadlist)
                 title_check_shift = " ".join(title_shiftlist)
                 compare_histograms(x, y, z, vol, meanint,
@@ -497,8 +453,8 @@ def receptor_dist_mod_big_plot(input_directory, output_filepath, title,
         xmin = min(mins)
         for shift, spread, element in zip(models_shift, models_spread, n_list):
             lefttext = plt.subplot(gs[counter])
-            lefttxt = (string.ascii_lowercase[int(counter/3)-1] + ") " +
-                       "n = " + str(element))
+            lefttxt = (string.ascii_lowercase[int(counter/3)-1] +
+                       f") n = {str(element)}")
             lefttext.text(0.5, 0.5, lefttxt, fontsize=35,
                           horizontalalignment="center",
                           verticalalignment="center")
@@ -524,15 +480,13 @@ def write_files(output_directory, input_directory, reference_directory,
     mainoutdir = create_output_folders(output_directory, n_list)
     for n in n_list:
         nf = float(n)
-        dirname = "n=" + n
+        dirname = f"n={n}"
         recshiftdir = os.path.join(mainoutdir, dirname, "receptors", "shift")
-        print("Calculating shifted receptor distributions with"
-              " n={}...".format(n))
+        print(f"Calculating shifted receptor distributions with n={n}...")
         write_files_receptor(input_directory, recshiftdir, filehandle, n=nf,
                              change_type="shift")
         recspreaddir = os.path.join(mainoutdir, dirname, "receptors", "spread")
-        print("Calculating spread out receptor",
-              " distributions with n={}...".format(n))
+        print(f"Calculating spread out receptor distributions with n={n}...")
         write_files_receptor(input_directory, recspreaddir, filehandle, n=nf,
                              change_type="spread")
         referencedir = os.path.join(mainoutdir, dirname, "reference")
@@ -580,14 +534,13 @@ def data_simulation():
                         help=("Directory filepath for your reference files."
                               " All .comred files in the input directory will"
                               " be read. Only required with -w to write"
-                              " files"),
-                        required=True,  type=str)
+                              " files"), type=str)
     parser.add_argument("-c", "--control", action="store_true",
                         help=("Toggles writing a control plot to check "
                               "the accuracy of the inverse transform "
                               "sampling."))
     args = parser.parse_args()
-    pdf_handle = args.filename + ".pdf"
+    pdf_handle = f"{args.filename}.pdf"
     pdf_filepath = os.path.join(args.output, pdf_handle)
     receptor_dist_mod_big_plot(input_directory=args.input,
                                output_filepath=pdf_filepath,

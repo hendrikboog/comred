@@ -14,8 +14,8 @@ import os
 import progressbar
 from textwrap import wrap
 
-# -----------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------
 
 def read_out_cells(receptor_directory, nucleus_directory, resolution_x,
                    resolution_y, resolution_z, output_filepath,
@@ -46,10 +46,8 @@ def read_out_cells(receptor_directory, nucleus_directory, resolution_x,
                 rng = np.random.RandomState(0)
                 colors = rng.rand(len(x))
                 fig = plt.figure(figsize=(8, 20))
-                if not figtitle:
-                    figtitle = ("\n".join(
-                        wrap("Visualization of file {}".format(rec), 60)))
-                plt.suptitle(figtitle)
+                figtitle = figtitle or f"Visualization of file {rec}"
+                plt.suptitle(figtitle, loc="center", wrap=True)
                 ax1 = plt.subplot(311)
                 ax1.set_title("X-Y Plane")
                 ax1.set_xlabel("x coordinate [µm]")
@@ -129,7 +127,7 @@ def vis_args():
 #                         required=False)
 # =============================================================================
     args = parser.parse_args()
-    output_filename = args.output_filename + ".pdf"
+    output_filename = f"{args.output_filename}.pdf"
     output_filepath = os.path.join(args.output_directory, output_filename)
     read_out_cells(args.receptors, args.reference, args.x_resolution,
                    args.y_resolution, args.z_resolution, output_filepath)

@@ -3,55 +3,12 @@
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
-import scipy.stats as sps
+import os
 import math
 import argparse
 import dist_calc as dc
 import progressbar
-
-
-# -----------------------------------------------------------------------------
-
-def stars(p):
-    # used to produce the stars on the boxplots
-    if p < 0.0001:
-        return "****"
-    elif p < 0.001:
-        return "***"
-    elif p < 0.01:
-        return "**"
-    elif p < 0.05:
-        return "*"
-    else:
-        return "-"
-
-
-# -----------------------------------------------------------------------------
-
-def mwu_effectsize(x, y):
-    # calculating the mann-whitney-u-test and effect sizes
-    x_mean = np.mean(x)
-    y_mean = np.mean(y)
-    x_std = np.std(x)
-    y_std = np.std(y)
-    n_x = len(x)
-    n_y = len(y)
-    u, pval = sps.mannwhitneyu(x, y, use_continuity=True,
-                               alternative="two-sided")
-    d = math.fabs((x_mean - y_mean)/(math.sqrt(((n_x - 1) * x_std ** 2
-                                                + (n_y + 1) * y_std ** 2)
-                                               / (n_x + n_y - 2))))
-    z = (u - n_x * n_y / 2)/(math.sqrt(n_x * n_y * (n_x + n_y + 1)/12))
-    r = math.fabs(z/math.sqrt(n_x + n_y))
-    return pval, d, r, x_mean, y_mean, x_std, y_std, n_x, n_y
-
-
-# -----------------------------------------------------------------------------
-
-def invisplot():
-    frame1 = plt.gca()
-    frame1.axes().get_xaxis().set_visible(False)
-    frame1.axes().get_yaxis().set_visible(False)
+import two_comp as tc
 
 
 # -----------------------------------------------------------------------------
@@ -61,8 +18,7 @@ def boxplot_all_bw(ylabel, title, datanames, datalists, legend):
     # that you want to have compared
     x = 1
     tickpos = [0]
-    yy = []
-    ymin = []
+    yy, ymin = [], []
     for element in datalists:
         y_max = np.max(np.concatenate((element[0], element[1])))
         y_min = np.min(np.concatenate((element[0], element[1])))
@@ -70,15 +26,13 @@ def boxplot_all_bw(ylabel, title, datanames, datalists, legend):
         ymin.append(y_min)
     y2 = np.max(yy)
     ymax = y2 + (math.fabs(np.min(ymin)) + math.fabs(y2)) * 0.33
-    # * 0.25 or 0.35
     for element in datalists:
-        p = mwu_effectsize(element[0], element[1])[0]
-        sp = stars(p)
+        p = tc.mwu_effectsize(element[0], element[1])[0]
+        sp = tc.stars(p)
         box = plt.boxplot([element[0], element[1]], positions=[x, (x+1)],
                           patch_artist=True, flierprops={"markersize": 4,
                           "markeredgecolor": "None", "marker": "."},
                           widths=0.9)
-        # coloris1 = [colors[0], colors[0], colors[1], colors[1]]
         for elementa, color in zip(box["whiskers"], ["black", "black", "black",
                                                      "black"]):
             elementa.set_color(color)
@@ -108,7 +62,6 @@ def boxplot_all_bw(ylabel, title, datanames, datalists, legend):
     axes.set_xlim([0, x-1])
     plt.title(title, fontsize=20)
     plt.ylabel(ylabel, fontsize=14)
-    # plt.xlabel("Conditions")
     labels = [""]
     for elementastimo in datanames:
         labels.append(elementastimo)
@@ -128,7 +81,7 @@ def create_big_plot_bw(output_filename, output_directory, filelist, rows, cols,
                        figtitle, titles, legends):
     # filelist is a list containing: [[bp_caption, filepath1, filepath2], ...]
     print("Creating plots...")
-    output_filepath = output_directory + "/" + output_filename + ".pdf"
+    output_filepath = os.path.join(output_directory, f"{output_filename}.pdf")
     with PdfPages(output_filepath) as pdf:
         with progressbar.ProgressBar(max_value=2*rows) as bar:
             # Creates shift plots
@@ -138,8 +91,7 @@ def create_big_plot_bw(output_filename, output_directory, filelist, rows, cols,
             counter = 0
             while x < rows:
                 plt.subplot(rows, 1, (x + 1))
-                labels = []
-                flist = []
+                labels, flist = [], []
                 y = 0
                 while y < cols:
                     labels.append(filelist[counter][0])
@@ -160,8 +112,7 @@ def create_big_plot_bw(output_filename, output_directory, filelist, rows, cols,
             # Creates spread plots
             fig = plt.figure(figsize=(2 * cols + 2.5, 8 * rows))
             plt.suptitle(figtitle, fontsize=18)
-            x = 0
-            counter = 0
+            x, counter = 0, 0
             while x < rows:
                 plt.subplot(rows, 1, (x + 1))
                 labels = []
