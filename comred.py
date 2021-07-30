@@ -256,8 +256,7 @@ def comred_args():
                           help=("Directory filepath for your reference files."
                                 " All .comred files in the input directory "
                                 "will be read. Only required with -w to write"
-                                " files"),
-                          required=True,  type=str)
+                                " files"), type=str)
     simparse.add_argument("-c", "--control", action="store_true",
                           help=("Toggles writing a control plot to check "
                                 "the accuracy of the inverse transform "
@@ -321,7 +320,7 @@ def comred_args():
                                args.receptors, args.reference,
                                args.x_resolution, args.y_resolution,
                                args.z_resolution, args.verbose)
-        input_filename = args.output_filename + ".txt"
+        input_filename = f"{args.output_filename}.txt"
         input_filepath_whole_cell = os.path.join(args.output_directory,
                                                  input_filename)
         dc.create_plots_whole_cell_COMs(args.output_filename,
@@ -349,7 +348,7 @@ def comred_args():
                               cols=args.pairs, figtitle=args.title,
                               titles=args.subtitle, legends=legends)
     elif args.script == "sim":
-        pdf_handle = args.filename + ".pdf"
+        pdf_handle = f"{args.filename}.pdf"
         pdf_filepath = os.path.join(args.output, pdf_handle)
         ds.receptor_dist_mod_big_plot(input_directory=args.input,
                                       output_filepath=pdf_filepath,
@@ -361,7 +360,7 @@ def comred_args():
                            reference_directory=args.reference,
                            filehandle=args.filehandle, n_list=args.n_list)
     elif args.script == "visualize":
-        output_filename = args.output_filename + ".pdf"
+        output_filename = f"{args.output_filename}.pdf"
         output_filepath = os.path.join(args.output_directory, output_filename)
         vis.read_out_cells(args.receptors, args.reference, args.x_resolution,
                            args.y_resolution, args.z_resolution,

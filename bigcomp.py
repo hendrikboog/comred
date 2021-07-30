@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
-import scipy.stats as sps
+import os
 import math
 import argparse
 import dist_calc as dc
@@ -18,8 +18,7 @@ def boxplot_all_bw(ylabel, title, datanames, datalists, legend):
     # that you want to have compared
     x = 1
     tickpos = [0]
-    yy = []
-    ymin = []
+    yy, ymin = [], []
     for element in datalists:
         y_max = np.max(np.concatenate((element[0], element[1])))
         y_min = np.min(np.concatenate((element[0], element[1])))
@@ -27,7 +26,6 @@ def boxplot_all_bw(ylabel, title, datanames, datalists, legend):
         ymin.append(y_min)
     y2 = np.max(yy)
     ymax = y2 + (math.fabs(np.min(ymin)) + math.fabs(y2)) * 0.33
-    # * 0.25 or 0.35
     for element in datalists:
         p = tc.mwu_effectsize(element[0], element[1])[0]
         sp = tc.stars(p)
@@ -35,7 +33,6 @@ def boxplot_all_bw(ylabel, title, datanames, datalists, legend):
                           patch_artist=True, flierprops={"markersize": 4,
                           "markeredgecolor": "None", "marker": "."},
                           widths=0.9)
-        # coloris1 = [colors[0], colors[0], colors[1], colors[1]]
         for elementa, color in zip(box["whiskers"], ["black", "black", "black",
                                                      "black"]):
             elementa.set_color(color)
@@ -84,7 +81,7 @@ def create_big_plot_bw(output_filename, output_directory, filelist, rows, cols,
                        figtitle, titles, legends):
     # filelist is a list containing: [[bp_caption, filepath1, filepath2], ...]
     print("Creating plots...")
-    output_filepath = output_directory + "/" + output_filename + ".pdf"
+    output_filepath = os.path.join(output_directory, f"{output_filename}.pdf")
     with PdfPages(output_filepath) as pdf:
         with progressbar.ProgressBar(max_value=2*rows) as bar:
             # Creates shift plots
@@ -94,8 +91,7 @@ def create_big_plot_bw(output_filename, output_directory, filelist, rows, cols,
             counter = 0
             while x < rows:
                 plt.subplot(rows, 1, (x + 1))
-                labels = []
-                flist = []
+                labels, flist = [], []
                 y = 0
                 while y < cols:
                     labels.append(filelist[counter][0])
@@ -116,8 +112,7 @@ def create_big_plot_bw(output_filename, output_directory, filelist, rows, cols,
             # Creates spread plots
             fig = plt.figure(figsize=(2 * cols + 2.5, 8 * rows))
             plt.suptitle(figtitle, fontsize=18)
-            x = 0
-            counter = 0
+            x, counter = 0, 0
             while x < rows:
                 plt.subplot(rows, 1, (x + 1))
                 labels = []

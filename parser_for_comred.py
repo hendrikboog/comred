@@ -13,44 +13,43 @@ import progressbar
 def parse_sv(input_filename, column_x, column_y, column_z, column_vol,
              column_meanint, counting=0, output_filename=False,
              dattype=".csv", verbose=0):
+    if counting:
+        for column in [column_x, column_y, column_z,
+                       column_vol, column_meanint]:
+            column -= counting
+    if dattype in ("csv", ".csv"):
+        splitter = ","
+    elif dattype in ("tsv", ".tsv"):
+        splitter = "\t"
+    else:
+        print("""Format not recognized try csv or tsv
+              files""")
+        sys.exit()
     with open(input_filename, "r") as csv_file:
         iter_csv_file = iter(csv_file)
         next(iter_csv_file)
-        if counting:
-            for column in [column_x, column_y, column_z,
-                           column_vol, column_meanint]:
-                column -= counting
-        if dattype in ("csv", ".csv"):
-            splitter = ","
-        elif dattype in ("tsv", ".tsv"):
-            splitter = "\t"
-        else:
-            print("""Format not recognized try csv or tsv
-                  files""")
-            sys.exit()
         if output_filename:
-            output_filename = output_filename
             with open(output_filename, "w") as output:
                 output.write("#Count\tX\tY\tZ\tVolume\tMean Intensity\n")
                 for count, line in enumerate(iter_csv_file):
-                    line.split(splitter)
+                    line = line.split(splitter)
                     values = [count, line[column_x], line[column_y],
                               line[column_z], line[column_vol],
                               line[column_meanint]]
                     values = ("\t".join(str(val) for val in values) + "\n")
                     output.write(values)
             if verbose:
-                print(("File {} successfully parsed").format(input_filename))
+                print(f"File {input_filename} successfully parsed")
         else:
             output = []
             for count, line in enumerate(iter_csv_file):
-                line.split(splitter)
+                line = line.split(splitter)
                 values = [count, line[column_x], line[column_y],
                           line[column_z], line[column_vol],
                           line[column_meanint]]
                 output.append(values)
             if verbose:
-                print(("File {} successfully parsed").format(input_filename))
+                print(f"File {input_filename} successfully parsed")
             return output
 
 
@@ -76,9 +75,8 @@ def parse_sv_directory(directory_name, column_x, column_y, column_z,
             if output_directory_name:
                 if output_filename:
                     output_filename = os.path.join(output_directory_name,
-                                                   output_filename + "_"
-                                                   + str(counter)
-                                                   + ".comred")
+                                                   f"{output_filename}_" +
+                                                   f"{str(counter)}.comred")
                     parse_sv(file, column_x, column_y, column_z, column_vol,
                              column_meanint, output_filename=output_filename,
                              dattype=dattype, verbose=verbose)
@@ -87,7 +85,7 @@ def parse_sv_directory(directory_name, column_x, column_y, column_z,
                 else:
                     output_filename = os.path.join(
                         output_directory_name,
-                        os.path.split(file)[1] + "_output" + ".comred")
+                        f"{os.path.split(file)[1]}_output.comred")
                     parse_sv(file, column_x, column_y, column_z, column_vol,
                              column_meanint, output_filename=output_filename,
                              dattype=dattype, verbose=verbose)
@@ -99,10 +97,10 @@ def parse_sv_directory(directory_name, column_x, column_y, column_z,
                                          verbose=verbose))
     if not output_directory_name:
         if verbose:
-            print(("Directory {} successfully parsed").format(directory_name))
+            print(f"Directory {directory_name} successfully parsed")
         return datalist
     if verbose:
-        print("Directory {} successfully parsed".format(directory_name))
+        print(f"Directory {directory_name} successfully parsed")
 
 
 # -----------------------------------------------------------------------------

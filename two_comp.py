@@ -4,6 +4,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
+import os
 import scipy.stats as sps
 import math
 import dist_calc as dc
@@ -50,12 +51,11 @@ def mwu_effectsize(x, y):
 
 def mwu_text(x, y, name_x, name_y):
     pval, d, r, x_mean, y_mean, x_std, y_std, n_x, n_y = mwu_effectsize(x, y)
-    textstr = ("p = {}\nCohens d = {}\nPearsons r = {}\n{} mean: {}\n{} "
-               "mean: {}\n{} std: {}\n{} std: {}\n{} number data points: {}\n"
-               "{} number data points: {}").format(pval, d, r, name_x, x_mean,
-                                                   name_y, y_mean, name_x,
-                                                   x_std, name_y, y_std,
-                                                   name_x, n_x, name_y, n_y)
+    textstr = (f"p = {pval}\nCohens d = {d}\nPearsons r = {r}\n"
+               f"{name_x} mean: {x_mean}\n{name_y} mean: {y_mean}\n"
+               f"{name_x} std: {x_std}\n{name_y} std: {y_std}\n"
+               f"{name_x} number data points: {n_x}\n"
+               f"{name_y} number data points: {n_y}")
     return textstr
 
 
@@ -65,7 +65,7 @@ def create_comparison_COM_plot(output_filename, output_directory,
                                input_filepath_whole_1, input_filepath_whole_2,
                                datanames):
     print("Create comparison plots")
-    output_filepath = "".join([output_directory, "/", output_filename, ".pdf"])
+    output_filepath = os.path.join(output_directory, f"{output_filename}.pdf")
     with PdfPages(output_filepath) as pdf:
         with progressbar.ProgressBar(max_value=5) as bar:
             whole_cell_values = [
@@ -73,8 +73,8 @@ def create_comparison_COM_plot(output_filename, output_directory,
                     dc.sort_whole_cell_COM_values(input_filepath_whole_2)]
             fig = plt.figure(figsize=(12, 20))
             figtitle = ("Comparison of whole cell totals from "
-                        "\n{}\n and \n{}").format(input_filepath_whole_1,
-                                                  input_filepath_whole_2)
+                        f"\n{input_filepath_whole_1}\n and \n"
+                        f"{input_filepath_whole_2}")
             plt.suptitle(figtitle, fontsize=9)
             plt.subplot(321)
             make_boxplot_comp_bw(whole_cell_values[0][0],
@@ -109,15 +109,13 @@ def create_comparison_COM_plot(output_filename, output_directory,
             plt.tight_layout(rect=[0, 0.03, 1, 0.95])
             pdf.savefig()
             plt.close(fig)
-            # -----------
             distance_cell_values = [
                     dc.sort_distance_COM_values(input_filepath_whole_1),
                     dc.sort_distance_COM_values(input_filepath_whole_2)]
             fig = plt.figure(figsize=(12, 8))
-            figtitle = ("\n".join([
-                "Comparison of average accumulation distances in ", "{}",
-                " and ", "{}"])).format(input_filepath_whole_1,
-                                        input_filepath_whole_2)
+            figtitle = (
+                "Comparison of average accumulation distances in \n"
+                f"{input_filepath_whole_1}\n and \n{input_filepath_whole_2}")
             plt.suptitle(figtitle, fontsize=9)
             plt.subplot(121)
             make_boxplot_comp_bw(distance_cell_values[0],
